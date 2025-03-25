@@ -1,0 +1,14 @@
+Flask # Python web framework
+requests # For making HTTP requests (e.g., to Discord API)
+python-dotenv # For loading environment variables
+psycopg2-binary # For connecting to PostgreSQL database
+Flask-Session # For storing session data
+Flask-Login # For managing user sessions
+Flask-WTF # For handling forms
+Flask-Migrate # For managing database migrations
+Flask-Script # For running scripts
+Flask-Admin # For managing database records
+discord.py # Discord API library
+tabulate # For formatting tables
+PyNaCl # For voice encryption
+gunicorn # For running the web server

@@ -1,0 +1,5 @@
+discord.py # Discord API library
+python-dotenv # For loading environment variables
+psycopg2-binary # For connecting to PostgreSQL database
+tabulate # For formatting tables
+PyNaCl # For voice encryption

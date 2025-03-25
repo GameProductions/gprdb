@@ -1,3 +1,0 @@
-discord.py
-psycopg2-binary
-# Add any other dependencies your bot uses

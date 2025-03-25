@@ -1,0 +1,56 @@
+services:
+  bot:
+    image: morenicano/gprdb-bot:latest # Pull the image from Docker Hub
+    # Use environment variables for sensitive data
+    environment:
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      POSTGRES_HOST: postgres # Use the service name as the hostname
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432} # default to 5432 if not provided
+    networks:
+      - gprdb
+    depends_on:
+      - postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Mount the named volume
+
+  postgres:
+    image: postgres:latest # Use the latest PostgreSQL image
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Mount the named volume
+    networks:
+      - gprdb
+
+  # Flask app service
+  webapp:
+    image: morenicano/gprdb-webapp:latest
+    ports:
+      - "5000:5000" # Expose the Flask app port
+    environment:
+      - POSTGRES_HOST=postgres # same as the postgres service name
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - gprdb
+    depends_on:
+      - postgres
+
+# Declare the volumes
+volumes:
+  postgres_data:
+    external: true # Use an existing volume
+#  webapp_data: # Removed webapp_data volume
+#    external: true
+# Declare the network
+networks:
+  gprdb:
+    driver: bridge # Use the default bridge network driver
