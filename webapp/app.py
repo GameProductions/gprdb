@@ -21,10 +21,10 @@ import multiprocessing
 load_dotenv()
 
 # Inspect environment variables
-print("Environment variables (Flask App):")
-for key, value in os.environ.items():
-    print(f"{key}={value}")
-print("-----------------------")
+#print("Environment variables (Flask App):")
+#for key, value in os.environ.items():
+#    print(f"{key}={value}")
+#print("-----------------------")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Use a strong, random secret key
