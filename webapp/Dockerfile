@@ -11,6 +11,12 @@ COPY requirements.txt /app
 # Install Python dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Create a directory for the Flask templates
+RUN mkdir /app/templates
+
+# Create test folder
+RUN mkdir /app/test
+
 # Copy the entire Flask application code to /app
 COPY . /app
 
