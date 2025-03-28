@@ -1,18 +1,34 @@
+import os
+import logging
+import multiprocessing
 import discord
 from discord.ext import commands
 from discord import app_commands
-import os
 import random
 import asyncio
 from typing import List, Optional, Dict, Any
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime, timezone
+from dotenv import load_dotenv  # Import load_dotenv
+
+load_dotenv()  # Load environment variables from .env
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("bot.log"),
+        logging.StreamHandler()
+    ]
+)
 
 # --- Constants ---
 DEFAULT_PARTICIPANT_LIMIT = 30
 MAX_PARTICIPANT_LIMIT = 1000
 TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
+WEBAPP_PORT = os.environ.get("WEBAPP_PORT")
 
 # --- Database Connection ---
 def get_db_connection():
@@ -27,7 +43,7 @@ def get_db_connection():
         )
         return conn
     except psycopg2.Error as e:
-        print(f"Error connecting to the database: {e}")
+        logging.error(f"Error connecting to the database: {e}")
         raise
 
 # --- Helper Functions ---
@@ -42,7 +58,7 @@ def create_tables_if_not_exists():
             sql.SQL("""
                 CREATE TABLE IF NOT EXISTS guilds (
                     guild_id BIGINT PRIMARY KEY,
-                    limit INTEGER NOT NULL,
+                    participant_limit INTEGER NOT NULL,  -- Renamed 'limit' to 'participant_limit'
                     running BOOLEAN NOT NULL,
                     name VARCHAR(255),
                     webhook_url TEXT,
@@ -58,10 +74,10 @@ def create_tables_if_not_exists():
             sql.SQL("""
                 CREATE TABLE IF NOT EXISTS participants (
                     guild_id BIGINT REFERENCES guilds(guild_id) ON DELETE CASCADE,
-                    user_id BIGINT PRIMARY KEY,
+                    user_id BIGINT,  -- Remove PRIMARY KEY here
                     entry_number INTEGER NOT NULL,
                     entries INTEGER NOT NULL DEFAULT 1,
-                    PRIMARY KEY (guild_id, user_id)
+                    PRIMARY KEY (guild_id, user_id)  -- Keep the composite primary key
                 )
             """)
         )
@@ -81,7 +97,7 @@ def create_tables_if_not_exists():
         cursor.close()
         conn.close()
     except psycopg2.Error as e:
-        print(f"Error creating tables: {e}")
+        logging.error(f"Error creating tables: {e}")
         raise
 
 def load_raffle_data(guild_id: int) -> dict:
@@ -92,14 +108,14 @@ def load_raffle_data(guild_id: int) -> dict:
 
         # Fetch guild data
         cursor.execute(
-            sql.SQL("SELECT limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number FROM guilds WHERE guild_id = %s"), (guild_id,)
+            sql.SQL("SELECT participant_limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number FROM guilds WHERE guild_id = %s"), (guild_id,) #renamed limit
         )
         guild_data = cursor.fetchone()
 
         if guild_data is None:
             # Guild not found, create a new entry with default values
             cursor.execute(
-                sql.SQL("INSERT INTO guilds (guild_id, limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"),
+                sql.SQL("INSERT INTO guilds (guild_id, participant_limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"), #renamed limit
                 (guild_id, DEFAULT_PARTICIPANT_LIMIT, False, None, None, 1, 'standard', None, None, None),
             )
             conn.commit()
@@ -114,7 +130,7 @@ def load_raffle_data(guild_id: int) -> dict:
             lucky_number = None
             participants = {}
         else:
-            limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number = guild_data
+            limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number = guild_data #renamed limit
             # Fetch participants for the guild
             cursor.execute(
                 sql.SQL("SELECT user_id, entry_number, entries FROM participants WHERE guild_id = %s"), (guild_id,)
@@ -136,13 +152,13 @@ def save_raffle_data(guild_id: int, data: dict):
 
         # Update guild data
         cursor.execute(
-            sql.SQL("UPDATE guilds SET limit = %s, running = %s, name = %s, webhook_url = %s, entry_limit = %s, raffle_type = %s, admin_role_id = %s, raffle_channel_id = %s, lucky_number = %s WHERE guild_id = %s"),
+            sql.SQL("UPDATE guilds SET participant_limit = %s, running = %s, name = %s, webhook_url = %s, entry_limit = %s, raffle_type = %s, admin_role_id = %s, raffle_channel_id = %s, lucky_number = %s WHERE guild_id = %s"), #renamed limit
             (data['limit'], data['running'], data['name'], data['webhook_url'], data['entry_limit'], data['raffle_type'], data['admin_role_id'], data['raffle_channel_id'], data['lucky_number'], guild_id),
         )
         if cursor.rowcount == 0:
             # Guild not found, insert a new entry
             cursor.execute(
-                sql.SQL("INSERT INTO guilds (guild_id, limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"),
+                sql.SQL("INSERT INTO guilds (guild_id, participant_limit, running, name, webhook_url, entry_limit, raffle_type, admin_role_id, raffle_channel_id, lucky_number) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"), #renamed limit
                 (guild_id, data['limit'], data['running'], data['name'], data['webhook_url'], data['entry_limit'], data['raffle_type'], data['admin_role_id'], data['raffle_channel_id'], data['lucky_number']),
             )
         conn.commit()
@@ -240,7 +256,7 @@ def clear_raffle(guild_id: int):
 
         # Reset participants and running state
         cursor.execute(
-            sql.SQL("UPDATE guilds SET running = %s, limit = %s, name = %s, webhook_url = %s, entry_limit = %s, raffle_type = %s, admin_role_id = %s, raffle_channel_id = %s, lucky_number = %s WHERE guild_id = %s"),
+            sql.SQL("UPDATE guilds SET running = %s, participant_limit = %s, name = %s, webhook_url = %s, entry_limit = %s, raffle_type = %s, admin_role_id = %s, raffle_channel_id = %s, lucky_number = %s WHERE guild_id = %s"), #renamed limit
             (False, DEFAULT_PARTICIPANT_LIMIT, None, None, 1, 'standard', None, None, None, guild_id),
         )
         cursor.execute(
@@ -304,7 +320,7 @@ class RaffleBot(commands.Bot):
     async def on_ready(self):
         print(f'Logged in as {self.user.name} ({self.user.id})')
         print('------')
-        for guild in self.guilds:
+        for guild in self.guilds:  # Corrected: Use self.guilds
             print(f"Connected to guild: {guild.name} (ID: {guild.id})")
 
 # --- Bot Setup ---

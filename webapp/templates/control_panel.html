@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #eee;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+         h1.dark-mode {
+             color: #fff;
+         }
+        div {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+             transition: background-color 0.3s ease, color 0.3s ease;
+        }
+         div.dark-mode {
+             background-color: #2a2a2a;
+             color: #eee;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+             color: #333;
+             transition: color 0.3s ease;
+        }
+        label.dark-mode {
+             color: #eee;
+        }
+        input {
+            padding: 8px;
+            margin-bottom: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #333;
+             transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        input.dark-mode {
+             background-color: #212121;
+             color: #eee;
+             border-color: #666;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+             transition: background-color 0.3s ease;
+        }
+        button.dark-mode {
+             background-color: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+         button.dark-mode:hover {
+            background-color: #45a049;
+        }
+        #discord_controls {
+            display:none;
+        }
+        .dark-mode-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+        }
+        .dark-mode-switch label {
+            margin-right: 10px;
+            color: #333;
+             transition: color 0.3s ease;
+        }
+          .dark-mode-switch label.dark-mode {
+             color: #eee;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        .nav-button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+             transition: background-color 0.3s ease;
+        }
+        .nav-button:hover {
+            background-color: #45a049;
+        }
+         .dark-mode .nav-button {
+            background-color: #5c6bc0;
+            color: #fff;
+        }
+        .dark-mode .nav-button:hover {
+            background-color: #495696;
+        }
+        #user-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            color: #333;
+        }
+        #user-info.dark-mode {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #eee;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+    <script>
+        async function setChannelId() {
+            const channelIdInput = document.getElementById('channel_id');
+            const channelId = channelIdInput.value;
+
+            const response = await fetch('/set_channel_id', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ channel_id: channelId })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert(result.message);
+                displayCurrentChannelId(); // Update display after successful change
+
+            } else {
+                alert(result.message);
+            }
+            channelIdInput.value = '';
+        }
+
+        async function sendDiscordMessage() {
+            const response = await fetch('/discord');
+            const text = await response.text();
+            alert(text);
+        }
+
+        // Function to fetch and display the current channel ID
+        async function displayCurrentChannelId() {
+            const response = await fetch('/get_channel_id', {  // New route to get the current channel ID
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await response.json();
+            if (response.ok && result.status === 'success') {
+                document.getElementById('current_channel_id_control_panel').textContent = result.channel_id;
+            } else {
+                 document.getElementById('current_channel_id_control_panel').textContent = 'Not Set'; // Or handle error
+
+            }
+        }
+        // Call it on page load, to display the current value
+        displayCurrentChannelId();
+
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const body = document.body;
+        const h1s = document.querySelectorAll('h1');
+        const divs = document.querySelectorAll('div');
+        const labels = document.querySelectorAll('label');
+        const inputs = document.querySelectorAll('input');
+        const buttons = document.querySelectorAll('button');
+        const userInfoDiv = document.getElementById('user-info');
+
+
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            body.classList.toggle('dark-mode');
+            h1s.forEach(h1 => h1.classList.toggle('dark-mode'));
+            divs.forEach(div => div.classList.toggle('dark-mode'));
+            labels.forEach(label => label.classList.toggle('dark-mode'));
+            inputs.forEach(input => input.classList.toggle('dark-mode'));
+            buttons.forEach(button => button.classList.toggle('dark-mode'));
+            userInfoDiv.classList.toggle('dark-mode');
+            // Store the user's preference
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
+        }
+
+        // Check for saved preference
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            toggleDarkMode();
+            darkModeToggle.checked = true;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+             toggleDarkMode();
+             darkModeToggle.checked = true;
+        }
+
+        // Event listener for the dark mode toggle
+        darkModeToggle.addEventListener('change', toggleDarkMode);
+
+        // Simulate fetching user data (replace with actual authentication data)
+        const userData = {
+            name: "John Doe",
+            email: "john.doe@example.com",
+            discordStatus: "Online",  // Example Discord status
+            discordActivity: "Playing a game", // Example Discord activity
+        };
+
+        // Display user data
+        document.getElementById('user-name').textContent = userData.name;
+        document.getElementById('user-email').textContent = userData.email;
+        document.getElementById('discord-status').textContent = userData.discordStatus;
+        document.getElementById('discord-activity').textContent = userData.discordActivity;
+
+    </script>
+</head>
+<body>
+    <div class="dark-mode-switch">
+        <label class="">Dark Mode</label>
+        <label class="switch">
+            <input type="checkbox" id="dark-mode-toggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+     <div id="user-info">
+        <p>Logged in as: <span id="user-name">Unknown</span></p>
+        <p>Email: <span id="user-email">Unknown</span></p>
+        <p>Discord Status: <span id="discord-status">Offline</span></p>
+        <p>Discord Activity: <span id="discord-activity">None</span></p>
+    </div>
+    <h1>Control Panel</h1>
+
+    <div>
+        <h2>Flask App Controls</h2>
+        <p>This section controls the Flask web application.</p>
+    </div>
+
+    <div>
+        <h2>Discord Bot Controls</h2>
+        <button onclick="document.getElementById('discord_controls').style.display='block'">Show</button>
+        <div id="discord_controls">
+            <p>This section controls the Discord bot.</p>
+             <p>Current Channel ID: <span id="current_channel_id_control_panel">Not Set</span></p>
+            <form onsubmit="setChannelId(); return false;">
+                <label for="channel_id">Set Discord Channel ID:</label>
+                <input type="number" id="channel_id" name="channel_id" required>
+                <button type="submit">Set Channel ID</button>
+            </form>
+            <button onclick="sendDiscordMessage()">Send Test Message</button>
+        </div>
+    </div>
+     <button class="nav-button" onclick="window.location.href='/'">Home</button>
+</body>
+</html>

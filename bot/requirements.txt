@@ -1,5 +1,14 @@
-discord.py # Discord API library
-python-dotenv # For loading environment variables
-psycopg2-binary # For connecting to PostgreSQL database
-tabulate # For formatting tables
-PyNaCl # For voice encryption
+# Discord API interaction
+discord.py          # A library for interacting with the Discord API
+
+# Environment management
+python-dotenv       # For loading environment variables from a .env file
+
+# Database interaction
+psycopg2-binary     # A PostgreSQL database adapter for Python
+
+# Formatting utilities
+tabulate            # For creating formatted tables
+
+# Image manipulation
+PyNaCl             # For voice support in discord.py
