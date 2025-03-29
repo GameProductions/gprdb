@@ -11,6 +11,7 @@ import psycopg2
 from psycopg2 import sql
 from datetime import datetime, timezone
 from dotenv import load_dotenv  # Import load_dotenv
+from flask import flash  # Import flash
 
 load_dotenv()  # Load environment variables from .env
 
@@ -52,8 +53,6 @@ def create_tables_if_not_exists():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-
-        # Use parameterized queries to prevent SQL injection
         cursor.execute(
             sql.SQL("""
                 CREATE TABLE IF NOT EXISTS guilds (
@@ -303,10 +302,38 @@ def get_available_entries(guild_id: int, limit: int, participants: dict) -> List
         taken_entries.add(participant_data['entry_number'])
     return [entry for entry in range(1, limit + 1) if entry not in taken_entries]
 
+async def execute_bot_command(command):
+    """Executes a bot command by sending it to the Discord channel."""
+    global discord_channel_id  # Access the global channel ID
+
+    # Check if the channel ID is set
+    if not discord_channel_id:
+        print("Error: Channel ID not set.")
+        flash("Channel ID not set. Please set it in the control panel.", "error")
+        return  # Exit the function if the channel ID is not set
+
+    try:
+        # Get the channel object from the bot
+        channel = bot.get_channel(int(discord_channel_id))
+
+        # Check if the channel exists
+        if channel:
+            # Send the command to the channel
+            await channel.send(command)
+            print(f"Sent command '{command}' to channel {discord_channel_id}")
+        else:
+            print(f"Error: Channel with ID {discord_channel_id} not found.")
+            flash(f"Channel with ID {discord_channel_id} not found.", "error")
+
+    except Exception as e:
+        print(f"Error sending command: {e}")
+        flash(f"Error sending command: {e}", "error")
+
 # --- Discord Bot Class ---
 class RaffleBot(commands.Bot):
     def __init__(self, *, command_prefix, intents):
         super().__init__(command_prefix=command_prefix, intents=intents)
+        self.command_queue = None  # Initialize command_queue
 
     async def setup_hook(self) -> None:
         # Create tables if they don't exist
@@ -316,12 +343,34 @@ class RaffleBot(commands.Bot):
         # Sync commands to individual guilds (for testing)
         for guild in self.guilds:
             await self.tree.sync(guild=guild)
+        # Start processing commands from the queue
+        self.loop.create_task(self.process_commands_from_queue())
 
     async def on_ready(self):
         print(f'Logged in as {self.user.name} ({self.user.id})')
         print('------')
         for guild in self.guilds:  # Corrected: Use self.guilds
             print(f"Connected to guild: {guild.name} (ID: {guild.id})")
+
+    async def process_commands_from_queue(self):
+        """Processes commands from the command queue."""
+        await self.wait_until_ready()
+        while not self.is_closed():
+            try:
+                command = self.command_queue.get(timeout=1)  # Check every 1 second
+                print(f"Executing command from queue: {command}")
+                # Get the channel
+                channel = self.get_channel(int(discord_channel_id))
+                if channel:
+                    # Send the command to the channel
+                    await channel.send(command)
+                else:
+                    print("Channel not found.")
+            except multiprocessing.queues.Empty:
+                pass  # No command in the queue
+            except Exception as e:
+                print(f"Error processing command from queue: {e}")
+            await asyncio.sleep(1)  # Prevent busy-waiting
 
 # --- Bot Setup ---
 intents = discord.Intents.default()
@@ -942,8 +991,16 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
         await interaction.response.send_message(f"An unexpected error occurred: {error}", ephemeral=True)
 
 # --- Run the Bot ---
+def run_bot(token, queue):
+    """Runs the bot, retrieving commands from the queue."""
+    bot.command_queue = queue  # Store the queue in the bot
+    bot.run(token)
+
 if __name__ == "__main__":
     if not TOKEN:
         print("DISCORD_BOT_TOKEN environment variable not set!")
     else:
-        bot.run(TOKEN)
+        # Create a command queue
+        command_queue = multiprocessing.Queue()
+        # Run the bot, passing the token and the queue
+        run_bot(TOKEN, command_queue)

@@ -38,5 +38,9 @@ Flask-Admin             # For managing database records
 # Web server
 gunicorn                # For running the web server
 
-# Rate limiting
+# Testing and debugging
 Flask-Limiter           # For rate limiting
+traceback               # For error handling and debugging
+
+# Asynchronous support
+asyncio                 # For asynchronous programming

@@ -1,0 +1,188 @@
+\bots\gprdb\webapp\templates\dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .command-section {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .command-section h2 {
+            margin-top: 0;
+            color: #555;
+        }
+        .command-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .command-form label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .command-form input,
+        .command-form select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .command-form button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .command-form button:hover {
+            background-color: #0056b3;
+        }
+        .flash {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="command-section">
+            <h2>Start Raffle</h2>
+            <form class="command-form" method="post" action="{{ url_for('start_raffle') }}">
+                <label for="raffle_name">Raffle Name:</label>
+                <input type="text" id="raffle_name" name="raffle_name" required>
+
+                <label for="raffle_type">Raffle Type:</label>
+                <select id="raffle_type" name="raffle_type">
+                    <option value="standard">Standard</option>
+                    <option value="lucky_number">Lucky Number</option>
+                </select>
+
+                <button type="submit">Start Raffle</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>End Raffle</h2>
+            <form class="command-form" method="post" action="{{ url_for('end_raffle') }}">
+                <button type="submit">End Raffle</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Set Participant Limit</h2>
+            <form class="command-form" method="post" action="{{ url_for('set_participant_limit') }}">
+                <label for="participant_limit">Participant Limit:</label>
+                <input type="number" id="participant_limit" name="participant_limit" required>
+                <button type="submit">Set Limit</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Set Entry Limit</h2>
+            <form class="command-form" method="post" action="{{ url_for('set_entry_limit') }}">
+                <label for="entry_limit">Entry Limit:</label>
+                <input type="number" id="entry_limit" name="entry_limit" required>
+                <button type="submit">Set Limit</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Set Webhook URL</h2>
+            <form class="command-form" method="post" action="{{ url_for('set_webhook_url') }}">
+                <label for="webhook_url">Webhook URL:</label>
+                <input type="url" id="webhook_url" name="webhook_url" required>
+                <button type="submit">Set Webhook</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Set Admin Role</h2>
+            <form class="command-form" method="post" action="{{ url_for('set_admin_role') }}">
+                <label for="admin_role_id">Admin Role ID:</label>
+                <input type="number" id="admin_role_id" name="admin_role_id" required>
+                <button type="submit">Set Admin Role</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Set Raffle Channel</h2>
+            <form class="command-form" method="post" action="{{ url_for('set_raffle_channel') }}">
+                <label for="raffle_channel_id">Raffle Channel ID:</label>
+                <input type="number" id="raffle_channel_id" name="raffle_channel_id" required>
+                <button type="submit">Set Raffle Channel</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Set Lucky Number</h2>
+            <form class="command-form" method="post" action="{{ url_for('set_lucky_number') }}">
+                <label for="lucky_number">Lucky Number:</label>
+                <input type="number" id="lucky_number" name="lucky_number" required>
+                <button type="submit">Set Lucky Number</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Clear Raffle</h2>
+            <form class="command-form" method="post" action="{{ url_for('clear_raffle') }}">
+                <button type="submit">Clear Raffle</button>
+            </form>
+        </div>
+
+        <div class="command-section">
+            <h2>Archive Raffle</h2>
+            <form class="command-form" method="post" action="{{ url_for('archive_raffle') }}">
+                <button type="submit">Archive Raffle</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
