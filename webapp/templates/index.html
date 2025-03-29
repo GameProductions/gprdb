@@ -114,20 +114,24 @@
             background-color: #495696;
         }
         #user-info {
-            position: fixed;
-            top: 20px;
-            left: 20px;
             background-color: rgba(255, 255, 255, 0.8);
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             color: #333;
+            margin-bottom: 20px; /* Add margin to separate from content */
         }
         #user-info.dark-mode {
             background-color: rgba(0, 0, 0, 0.8);
             color: #eee;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align items to the start of the container */
+            padding: 20px;
         }
     </style>
 </head>
@@ -139,15 +143,34 @@
             <span class="slider round"></span>
         </label>
     </div>
-    <div id="user-info">
-        <p>Logged in as: <span id="user-name">Unknown</span></p>
-        <p>Email: <span id="user-email">Unknown</span></p>
-        <p>Discord Status: <span id="discord-status">Offline</span></p>
-        <p>Discord Activity: <span id="discord-activity">None</span></p>
+    <div class="container">
+        <h1>Welcome to the Application</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% if session.logged_in %}
+            <div id="user-info">
+                <p>Logged in as: <span id="user-name">{{ session.user.username }}</span></p>
+                <p>Email: <span id="user-email">{{ session.user.email }}</span></p>
+                <p>Discord ID: <span id="user-id">{{ session.user.id }}</span></p>
+                <p>Admin: {% if session.is_admin %}Yes{% else %}No{% endif %}</p>
+            </div>
+            <button class="nav-button" onclick="window.location.href='/logout'">Logout</button>
+            {% if session.is_admin %}
+                <button class="nav-button" onclick="window.location.href='/control_panel'">Control Panel</button>
+            {% endif %}
+        {% else %}
+            <button class="nav-button" onclick="window.location.href='/login'">Login with Discord</button>
+        {% endif %}
     </div>
-    <h1>Welcome to the Application</h1>
-    <p>This is the main page of the web application.</p>
-     <button class="nav-button" onclick="window.location.href='/control_panel'">Control Panel</button>
     <script>
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const body = document.body;
@@ -179,20 +202,6 @@
 
         // Event listener for the dark mode toggle
         darkModeToggle.addEventListener('change', toggleDarkMode);
-
-        // Simulate fetching user data (replace with actual authentication data)
-        const userData = {
-            name: "John Doe",
-            email: "john.doe@example.com",
-            discordStatus: "Online",  // Example Discord status
-            discordActivity: "Playing a game", // Example Discord activity
-        };
-
-        // Display user data
-        document.getElementById('user-name').textContent = userData.name;
-        document.getElementById('user-email').textContent = userData.email;
-        document.getElementById('discord-status').textContent = userData.discordStatus;
-        document.getElementById('discord-activity').textContent = userData.discordActivity;
     </script>
 </body>
 </html>
