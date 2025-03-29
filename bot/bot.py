@@ -332,7 +332,12 @@ class RaffleBot(commands.Bot):
                 command = self.command_queue.get(timeout=1)  # Check every 1 second
                 print(f"Executing command from queue: {command}")
                 # Get the channel
-                channel = self.get_channel(int(discord_channel_id))
+                discord_channel_id = os.environ.get("DISCORD_CHANNEL_ID")  # Define or fetch the channel ID
+                if discord_channel_id:
+                    channel = self.get_channel(int(discord_channel_id))
+                else:
+                    print("DISCORD_CHANNEL_ID is not set in the environment variables.")
+                    continue
                 if channel:
                     # Send the command to the channel
                     await channel.send(command)
