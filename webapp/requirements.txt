@@ -40,7 +40,6 @@ gunicorn                # For running the web server
 
 # Testing and debugging
 Flask-Limiter           # For rate limiting
-traceback               # For error handling and debugging
 
 # Asynchronous support
 asyncio                 # For asynchronous programming
