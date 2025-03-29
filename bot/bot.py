@@ -11,7 +11,6 @@ import psycopg2
 from psycopg2 import sql
 from datetime import datetime, timezone
 from dotenv import load_dotenv  # Import load_dotenv
-from flask import flash  # Import flash
 
 load_dotenv()  # Load environment variables from .env
 
@@ -301,33 +300,6 @@ def get_available_entries(guild_id: int, limit: int, participants: dict) -> List
     for participant_data in participants.values():
         taken_entries.add(participant_data['entry_number'])
     return [entry for entry in range(1, limit + 1) if entry not in taken_entries]
-
-async def execute_bot_command(command):
-    """Executes a bot command by sending it to the Discord channel."""
-    global discord_channel_id  # Access the global channel ID
-
-    # Check if the channel ID is set
-    if not discord_channel_id:
-        print("Error: Channel ID not set.")
-        flash("Channel ID not set. Please set it in the control panel.", "error")
-        return  # Exit the function if the channel ID is not set
-
-    try:
-        # Get the channel object from the bot
-        channel = bot.get_channel(int(discord_channel_id))
-
-        # Check if the channel exists
-        if channel:
-            # Send the command to the channel
-            await channel.send(command)
-            print(f"Sent command '{command}' to channel {discord_channel_id}")
-        else:
-            print(f"Error: Channel with ID {discord_channel_id} not found.")
-            flash(f"Channel with ID {discord_channel_id} not found.", "error")
-
-    except Exception as e:
-        print(f"Error sending command: {e}")
-        flash(f"Error sending command: {e}", "error")
 
 # --- Discord Bot Class ---
 class RaffleBot(commands.Bot):
