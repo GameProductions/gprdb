@@ -352,6 +352,7 @@ class RaffleBot(commands.Bot):
 # --- Bot Setup ---
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 bot = RaffleBot(command_prefix="!", intents=intents)
 
 # --- Helper function to check admin role ---
