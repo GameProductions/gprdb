@@ -459,6 +459,7 @@
             <form onsubmit="setChannelId(); return false;">
                 <label for="channel_id">Set Discord Channel ID:</label>
                 <input type="number" id="channel_id" name="channel_id" required>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit">Set Channel ID</button>
             </form>
             <button onclick="sendDiscordMessage()">Send Test Message</button>

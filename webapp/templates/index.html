@@ -319,8 +319,14 @@
                             <td>{{ data.status }}</td>
                             {% if session.is_admin %}
                                 <td>
-                                    <button class="nav-button" onclick="window.location.href='/edit_raffle/{{ guild_id }}'">Edit</button>
-                                    <button class="nav-button" onclick="window.location.href='/end_raffle/{{ guild_id }}'">End</button>
+                                    <form method="POST" action="/edit_raffle/{{ guild_id }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <button class="nav-button" type="submit">Edit</button>
+                                    </form>
+                                    <form method="POST" action="/end_raffle/{{ guild_id }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <button class="nav-button" type="submit">End</button>
+                                    </form>
                                 </td>
                             {% endif %}
                         </tr>
