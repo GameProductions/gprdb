@@ -1,17 +1,17 @@
-\bots\gprdb\webapp\templates\dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Control Panel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
             color: #333;
             margin: 0;
-            padding: 0;
+            padding: 20px;
+            line-height: 1.6;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -36,273 +36,303 @@
 
         .container {
             max-width: 800px;
-            margin: 20px auto;
+            margin: 0 auto;
             background-color: #fff;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         h1 {
-            text-align: center;
-            color: #333;
-        }
-        .command-section {
+            color: #2c3e50;
             margin-bottom: 20px;
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
+            text-align: center;
         }
-        .command-section h2 {
-            margin-top: 0;
-            color: #555;
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 10px;
         }
-        .command-form {
-            display: flex;
-            flex-direction: column;
+        p {
+            margin-bottom: 10px;
         }
-        .command-form label {
+        ul {
+            margin-bottom: 10px;
+            padding-left: 20px;
+        }
+        ul li{
             margin-bottom: 5px;
-            font-weight: bold;
         }
-        .command-form input,
-        .command-form select {
-            padding: 8px;
+        ol {
             margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding-left: 20px;
         }
-        .command-form button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+        ol li {
+            margin-bottom: 5px;
         }
-        .command-form button:hover {
-            background-color: #0056b3;
+
+        a {
+            color: #0078d7;
+            text-decoration: none;
         }
-        .flash {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+        a:hover {
+            text-decoration: underline;
         }
-        .flash.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #eee;
+            }
+            .container {
+                background-color: #212121;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            }
+            h1, h2 {
+                color: #fff;
+            }
+            a {
+                color: #64b5f6;
+            }
         }
-        .flash.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .dark-mode-switch {
+        /* Hamburger Menu Styles */
+        .hamburger-menu {
             position: fixed;
             top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            z-index: 1000;
-        }
-        .dark-mode-switch label {
-            margin-right: 10px;
-            color: #333;
-            transition: color 0.3s ease;
-        }
-        .dark-mode-switch label.dark-mode {
-            color: #eee;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
+            left: 20px;
+            z-index: 1001;
             cursor: pointer;
+        }
+
+        .bar {
+            width: 30px;
+            height: 3px;
+            background-color: #333;
+            margin: 6px 0;
+            transition: 0.4s;
+        }
+
+        .change .bar1 {
+            -webkit-transform: rotate(-45deg) translate(-9px, 6px);
+            transform: rotate(-45deg) translate(-9px, 6px);
+        }
+
+        .change .bar2 {
+            opacity: 0;
+        }
+
+        .change .bar3 {
+            -webkit-transform: rotate(45deg) translate(-8px, -8px);
+            transform: rotate(45deg) translate(-8px, -8px);
+        }
+
+        .menu {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1000;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            -webkit-transition: .4s;
-            transition: .4s;
-            border-radius: 34px;
+            background-color: rgba(0,0,0, 0.9);
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
         }
-        .slider:before {
+
+        .menu a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .menu a:hover {
+            color: #f1f1f1;
+        }
+
+        .menu .closebtn {
             position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            -webkit-transition: .4s;
-            transition: .4s;
-            border-radius: 50%;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
         }
-        input:checked + .slider {
-            background-color: #2196F3;
+
+        @media screen and (max-height: 450px) {
+            .menu {padding-top: 50px;}
+            .menu a {font-size: 20px;}
         }
-        input:focus + .slider {
-            box-shadow: 0 0 1px #2196F3;
+        /* Dark mode styles for hamburger menu */
+        @media (prefers-color-scheme: dark) {
+            .hamburger-menu .bar {
+                background-color: #eee; /* Adjust color for dark mode */
+            }
         }
-        input:checked + .slider:before {
-            -webkit-transform: translateX(26px);
-            -ms-transform: translateX(26px);
-            transform: translateX(26px);
+
+        #user-info-menu {
+            color: #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #555;
         }
-        .slider.round {
-            border-radius: 34px;
-        }
-        .slider.round:before {
-            border-radius: 50%;
+
+        #user-info-menu p {
+            margin: 5px 0;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
+    <div class="hamburger-menu">
+        <div class="bar bar1"></div>
+        <div class="bar bar2"></div>
+        <div class="bar bar3"></div>
+    </div>
+
+    <div id="myMenu" class="menu">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeMenu()">×</a>
+        {% if session.logged_in %}
+            <div id="user-info-menu">
+                <p>Logged in as: <span id="user-name">Unknown</span></p>
+                <p>Email: <span id="user-email">Unknown</span></p>
+                <p>Discord Status: <span id="discord-status">Offline</span></p>
+            </div>
+            <a href="/logout">Logout</a>
+            {% if session.is_admin %}
+                <a href="/control_panel">Control Panel</a>
+            {% endif %}
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
+        <a href="/">Home</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/tos">Terms of Service</a>
+    </div>
+
     <div class="container">
         <h1>Admin Dashboard</h1>
 
-        <div class="dark-mode-switch">
-            <label>Dark Mode</label>
-            <label class="switch">
-                <input type="checkbox" id="dark-mode-toggle">
-                <span class="slider round"></span>
-            </label>
-        </div>
-
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flashes">
+                <ul class="flashes">
                     {% for category, message in messages %}
-                        <div class="flash {{ category }}">{{ message }}</div>
+                        <li class="{{ category }}">{{ message }}</li>
                     {% endfor %}
-                </div>
+                </ul>
             {% endif %}
         {% endwith %}
 
-        <div class="command-section">
-            <h2>Start Raffle</h2>
-            <form class="command-form" method="post" action="{{ url_for('start_raffle') }}">
-                <label for="raffle_name">Raffle Name:</label>
-                <input type="text" id="raffle_name" name="raffle_name" required>
+        <h2>Raffle Controls</h2>
+        <form action="/start_raffle" method="post">
+            {{ csrf_token() }}
+            <label for="raffle_name">Raffle Name:</label>
+            <input type="text" id="raffle_name" name="raffle_name" required><br><br>
 
-                <label for="raffle_type">Raffle Type:</label>
-                <select id="raffle_type" name="raffle_type">
-                    <option value="standard">Standard</option>
-                    <option value="lucky_number">Lucky Number</option>
-                </select>
+            <label for="raffle_type">Raffle Type:</label>
+            <select id="raffle_type" name="raffle_type">
+                <option value="standard">Standard</option>
+                <option value="weighted">Weighted</option>
+                <option value="lucky_number">Lucky Number</option>
+            </select><br><br>
 
-                <button type="submit">Start Raffle</button>
-            </form>
-        </div>
+            <button type="submit">Start Raffle</button>
+        </form>
 
-        <div class="command-section">
-            <h2>End Raffle</h2>
-            <form class="command-form" method="post" action="{{ url_for('end_raffle') }}">
-                <button type="submit">End Raffle</button>
-            </form>
-        </div>
+        <form action="/end_raffle" method="post">
+            {{ csrf_token() }}
+            <button type="submit">End Raffle</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Set Participant Limit</h2>
-            <form class="command-form" method="post" action="{{ url_for('set_participant_limit') }}">
-                <label for="participant_limit">Participant Limit:</label>
-                <input type="number" id="participant_limit" name="participant_limit" required>
-                <button type="submit">Set Limit</button>
-            </form>
-        </div>
+        <form action="/set_participant_limit" method="post">
+            {{ csrf_token() }}
+            <label for="participant_limit">Participant Limit:</label>
+            <input type="number" id="participant_limit" name="participant_limit" required><br><br>
+            <button type="submit">Set Participant Limit</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Set Entry Limit</h2>
-            <form class="command-form" method="post" action="{{ url_for('set_entry_limit') }}">
-                <label for="entry_limit">Entry Limit:</label>
-                <input type="number" id="entry_limit" name="entry_limit" required>
-                <button type="submit">Set Limit</button>
-            </form>
-        </div>
+        <form action="/set_entry_limit" method="post">
+            {{ csrf_token() }}
+            <label for="entry_limit">Entry Limit:</label>
+            <input type="number" id="entry_limit" name="entry_limit" required><br><br>
+            <button type="submit">Set Entry Limit</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Set Webhook URL</h2>
-            <form class="command-form" method="post" action="{{ url_for('set_webhook_url') }}">
-                <label for="webhook_url">Webhook URL:</label>
-                <input type="url" id="webhook_url" name="webhook_url" required>
-                <button type="submit">Set Webhook</button>
-            </form>
-        </div>
+        <form action="/set_webhook_url" method="post">
+            {{ csrf_token() }}
+            <label for="webhook_url">Webhook URL:</label>
+            <input type="text" id="webhook_url" name="webhook_url" required><br><br>
+            <button type="submit">Set Webhook URL</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Set Admin Role</h2>
-            <form class="command-form" method="post" action="{{ url_for('set_admin_role') }}">
-                <label for="admin_role_id">Admin Role ID:</label>
-                <input type="number" id="admin_role_id" name="admin_role_id" required>
-                <button type="submit">Set Admin Role</button>
-            </form>
-        </div>
+        <form action="/set_admin_role" method="post">
+            {{ csrf_token() }}
+            <label for="admin_role_id">Admin Role ID:</label>
+            <input type="number" id="admin_role_id" name="admin_role_id" required><br><br>
+            <button type="submit">Set Admin Role</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Set Raffle Channel</h2>
-            <form class="command-form" method="post" action="{{ url_for('set_raffle_channel') }}">
-                <label for="raffle_channel_id">Raffle Channel ID:</label>
-                <input type="number" id="raffle_channel_id" name="raffle_channel_id" required>
-                <button type="submit">Set Raffle Channel</button>
-            </form>
-        </div>
+        <form action="/set_raffle_channel" method="post">
+            {{ csrf_token() }}
+            <label for="raffle_channel_id">Raffle Channel ID:</label>
+            <input type="number" id="raffle_channel_id" name="raffle_channel_id" required><br><br>
+            <button type="submit">Set Raffle Channel</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Set Lucky Number</h2>
-            <form class="command-form" method="post" action="{{ url_for('set_lucky_number') }}">
-                <label for="lucky_number">Lucky Number:</label>
-                <input type="number" id="lucky_number" name="lucky_number" required>
-                <button type="submit">Set Lucky Number</button>
-            </form>
-        </div>
+        <form action="/set_lucky_number" method="post">
+            {{ csrf_token() }}
+            <label for="lucky_number">Lucky Number:</label>
+            <input type="number" id="lucky_number" name="lucky_number" required><br><br>
+            <button type="submit">Set Lucky Number</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Clear Raffle</h2>
-            <form class="command-form" method="post" action="{{ url_for('clear_raffle') }}">
-                <button type="submit">Clear Raffle</button>
-            </form>
-        </div>
+        <form action="/clear_raffle" method="post">
+            {{ csrf_token() }}
+            <button type="submit">Clear Raffle</button>
+        </form>
 
-        <div class="command-section">
-            <h2>Archive Raffle</h2>
-            <form class="command-form" method="post" action="{{ url_for('archive_raffle') }}">
-                <button type="submit">Archive Raffle</button>
-            </form>
-        </div>
+        <form action="/archive_raffle" method="post">
+            {{ csrf_token() }}
+            <button type="submit">Archive Raffle</button>
+        </form>
+        
+        <h2>Create Test Raffle</h2>
+        <form action="/create_test_raffle" method="post">
+            {{ csrf_token() }}
+            <label for="test_raffle_name">Test Raffle Name:</label>
+            <input type="text" id="test_raffle_name" name="test_raffle_name" required><br><br>
+            
+            <label for="test_raffle_type">Test Raffle Type:</label>
+            <select id="test_raffle_type" name="test_raffle_type">
+                <option value="standard">Standard</option>
+                <option value="weighted">Weighted</option>
+                <option value="lucky_number">Lucky Number</option>
+            </select><br><br>
+            
+            <label for="num_test_entries">Number of Test Entries:</label>
+            <input type="number" id="num_test_entries" name="num_test_entries" value="5" required><br><br>
+            
+            <button type="submit">Create Test Raffle</button>
+        </form>
     </div>
+
     <script>
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const body = document.body;
-
-        // Function to toggle dark mode
-        function toggleDarkMode() {
-            body.classList.toggle('dark-mode');
-            // Store the user's preference in localStorage
-            localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
+        function openMenu() {
+            document.getElementById("myMenu").style.width = "250px";
         }
 
-        // Check for saved preference in localStorage
-        if (localStorage.getItem('darkMode') === 'enabled') {
-            toggleDarkMode(); // Apply dark mode if it was previously enabled
-            darkModeToggle.checked = true; // Update the checkbox state
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            toggleDarkMode();
-            darkModeToggle.checked = true;
+        function closeMenu() {
+            document.getElementById("myMenu").style.width = "0";
+            document.querySelector('.hamburger-menu').classList.remove("change");
         }
 
-        // Event listener for the dark mode toggle
-        darkModeToggle.addEventListener('change', toggleDarkMode);
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark-mode');
+        }
+
+        document.querySelector('.hamburger-menu').addEventListener('click', function() {
+            openMenu();
+            this.classList.toggle("change");
+        });
     </script>
 </body>
 </html>

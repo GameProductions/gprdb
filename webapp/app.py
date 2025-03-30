@@ -3,19 +3,19 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, flash
 import discord
 from discord.ext import commands
-import requests  # type: ignore
+import requests
 from urllib.parse import quote_plus
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
-from flask_wtf import FlaskForm  # type: ignore
-from wtforms import StringField, SubmitField  # type: ignore
-from wtforms.validators import DataRequired  # type: ignore
-from flask_wtf.csrf import CSRFProtect  # type: ignore
-import logging  # Import the logging module
-from flask_limiter import Limiter  # type: ignore
-from flask_limiter.util import get_remote_address  # type: ignore
-from flask_session import Session  # type: ignore # Import Flask-Session
-import redis  # type: ignore # Import the Redis module
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
+from flask_wtf.csrf import CSRFProtect
+import logging
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_session import Session
+import redis
 import multiprocessing
 from multiprocessing import Queue
 import traceback
@@ -30,20 +30,20 @@ for key, value in os.environ.items():
 print("-----------------------")
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Use a strong, random secret key
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 # Configure CSRF protection
 csrf = CSRFProtect(app)
 
 # Configure logging
-logging.basicConfig(level=logging.ERROR)  # Set the logging level
+logging.basicConfig(level=logging.ERROR)
 
 # Configure rate limiting
 limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["200 per day", "50 per hour"],  # Adjust limits as needed
-    storage_uri=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', '6379')}",  # Use Redis for storage
+    storage_uri=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', '6379')}",
     strategy="fixed-window"
 )
 
@@ -84,14 +84,14 @@ else:
     # Handle the case where the variable is not set, e.g., set a default or exit
     exit()  # Or set a default value: DISCORD_REDIRECT_URI = "http://localhost:5000/callback"
 print(f"DISCORD_REDIRECT_URI is {DISCORD_REDIRECT_URI}")
-SCOPES = "identify email guilds guilds.members.read"  # Add 'email' if you need it and guilds
-# Add a slash
+SCOPES = "identify email guilds guilds.members.read"
+
 DISCORD_AUTHORIZATION_URL = f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope={SCOPES}"
 DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
-DISCORD_API_BASE_URL = "https://discord.com/api/v10"  # Use a specific API version
-DISCORD_GUILD_ID = os.getenv("DISCORD_GUILD_ID")  # Add guild ID to env
-DISCORD_ADMIN_ROLE_ID = os.getenv("DISCORD_ADMIN_ROLE_ID")  # Add role ID
-DISCORD_PUBLIC_KEY = os.getenv("DISCORD_PUBLIC_KEY")  # Add public key
+DISCORD_API_BASE_URL = "https://discord.com/api/v10"
+DISCORD_GUILD_ID = os.getenv("DISCORD_GUILD_ID")
+DISCORD_ADMIN_ROLE_ID = os.getenv("DISCORD_ADMIN_ROLE_ID")
+DISCORD_PUBLIC_KEY = os.getenv("DISCORD_PUBLIC_KEY")
 
 
 def get_discord_user(access_token):
@@ -189,20 +189,35 @@ class ChannelIDForm(FlaskForm):
     submit = SubmitField("Set Channel ID")
 
 
-@app.route("/set_channel_id", methods=["GET", "POST"])
+@app.route("/set_channel_id", methods=["POST"])
 def set_channel_id():
     """Sets the channel ID for the bot."""
-    form = ChannelIDForm()
-    if form.validate_on_submit():
-        new_channel_id = form.channel_id.data
+    if not session.get("logged_in"):
+        return jsonify({"status": "error", "message": "You must be logged in to access this page."}), 403
+
+    try:
+        data = request.get_json()
+        new_channel_id = data.get("channel_id")
+        csrf_token = data.get("csrf_token")
+
+        if not new_channel_id:
+            return jsonify({"status": "error", "message": "Channel ID is required."}), 400
+
+        # Validate CSRF token
+        if not csrf.validate(csrf_token):
+            return jsonify({"status": "error", "message": "Invalid CSRF token."}), 400
+
         global discord_channel_id
         discord_channel_id = new_channel_id
         print(f"Channel ID set to {discord_channel_id}")
-        return redirect(url_for("control_panel"))
-    return render_template("set_channel_id.html", form=form)
+        return jsonify({"status": "success", "message": f"Channel ID set to {discord_channel_id}"}), 200
+
+    except Exception as e:
+        print(f"Error setting channel ID: {e}")
+        return jsonify({"status": "error", "message": "An error occurred while setting the channel ID."}), 500
 
 
-@app.route("/set_guild_id", methods=["POST"])  # Added
+@app.route("/set_guild_id", methods=["POST"])
 def set_guild_id():
     """Sets the guild ID for the bot."""
     new_guild_id = request.form["guild_id"]
@@ -212,7 +227,7 @@ def set_guild_id():
     return redirect(url_for("control_panel"))
 
 
-@app.route("/set_admin_role_id", methods=["POST"])  # Added
+@app.route("/set_admin_role_id", methods=["POST"])
 def set_admin_role_id():
     """Sets the admin role ID for the bot."""
     new_admin_role_id = request.form["admin_role_id"]
@@ -228,13 +243,13 @@ def get_channel_id():
     return jsonify({"channel_id": discord_channel_id})
 
 
-@app.route("/get_guild_id", methods=["GET"])  # Added
+@app.route("/get_guild_id", methods=["GET"])
 def get_guild_id():
     """Returns the current guild ID."""
     return jsonify({"guild_id": discord_guild_id})
 
 
-@app.route("/get_admin_role_id", methods=["GET"])  # Added
+@app.route("/get_admin_role_id", methods=["GET"])
 def get_admin_role_id():
     """Returns the current admin role ID."""
     return jsonify({"admin_role_id": discord_admin_role_id})
@@ -243,7 +258,7 @@ def get_admin_role_id():
 @app.route("/discord")
 def send_discord_message():
     """Sends a message to the Discord channel."""
-    message = "Hello from the web app!"  # Replace with your desired message
+    message = "Hello from the web app!"
     if discord_channel_id:
         # Get the channel
         channel = bot.get_channel(int(discord_channel_id))
@@ -281,7 +296,7 @@ def callback():
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": os.getenv("DISCORD_REDIRECT_URI"),
-            "scope": "identify email guilds"  # Ensure scope is included
+            "scope": "identify email guilds"
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = requests.post(DISCORD_TOKEN_URL, data=data, headers=headers)
@@ -333,7 +348,7 @@ def logout():
 
 def verify_signature(signature, timestamp, body):
     """Verifies the signature of a Discord interaction request."""
-    key = VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY))  # Use the public key
+    key = VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY))
     message = bytes(timestamp + body, encoding="utf8")
     signature_bytes = bytes.fromhex(signature)
     try:
@@ -359,9 +374,9 @@ def interactions():
     data = request.get_json()
     interaction_type = data.get("type")
 
-    if interaction_type == 1:  # Ping
+    if interaction_type == 1:  # Ping Interaction
         return jsonify({"type": 1})
-    elif interaction_type == 2:  # Application Command
+    elif interaction_type == 2: # Command Interaction
         command_name = data["data"]["name"]
         if command_name == "hello":
             return jsonify({
@@ -419,6 +434,36 @@ def start_raffle():
     execute_bot_command(command)
 
     flash(f"Raffle '{raffle_name}' started successfully!", "success")
+    return redirect(url_for("dashboard"))
+
+
+# New route to create a test raffle
+@app.route("/create_test_raffle", methods=["POST"])
+def create_test_raffle():
+    """Creates a test raffle with sample participants."""
+    if not session.get("logged_in") or not session.get("is_admin"):
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("index"))
+
+    test_raffle_name = request.form.get("test_raffle_name")
+    test_raffle_type = request.form.get("test_raffle_type")
+    num_test_entries = int(request.form.get("num_test_entries", 5))
+
+    # Basic validation
+    if not test_raffle_name or not test_raffle_type:
+        flash("Raffle name and type are required.", "error")
+        return redirect(url_for("dashboard"))
+
+    # Construct the start command
+    start_command = f"!start {test_raffle_name} {test_raffle_type}"
+    execute_bot_command(start_command)
+
+    # Add test participants
+    for i in range(1, num_test_entries + 1):
+        add_command = f"!add TestUser{i} {i}"
+        execute_bot_command(add_command)
+
+    flash(f"Test raffle '{test_raffle_name}' created with {num_test_entries} participants!", "success")
     return redirect(url_for("dashboard"))
 
 
