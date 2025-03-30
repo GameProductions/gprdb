@@ -255,17 +255,21 @@
                 <p>Email: <span id="user-email">{{ session.user.email }}</span></p>
                 <p>Discord ID: <span id="user-id">{{ session.user.id }}</span></p>
                 <p>Admin: {% if session.is_admin %}Yes{% else %}No{% endif %}</p>
+                <a href="/logout">Logout</a>
             </div>
-            <a href="/logout">Logout</a>
-            {% if session.is_admin %}
-                <a href="/control_panel">Control Panel</a>
-            {% endif %}
         {% else %}
-            <a href="/login">Login</a>
+            <div id="user-info-menu">
+                <a href="/login">Login</a>
+            </div>
         {% endif %}
         <a href="/">Home</a>
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/tos">Terms of Service</a>
+        {% if session.is_admin %}
+            <a href="/control_panel">Control Panel</a>
+        {% endif %}
+    </div>
+
+    <div style="position: absolute; bottom: 0; width: 100%; text-align: center;">
+        <a href="https://gameproductions.net/privacy">Privacy Policy</a> | <a href="https://gameproductions.net/tos">Terms of Service</a>
     </div>
 
     <div class="dark-mode-switch">
@@ -289,7 +293,6 @@
         {% endwith %}
 
         {% if session.logged_in %}
-            <button class="nav-button" onclick="window.location.href='/logout'">Logout</button>
             {% if session.is_admin %}
                 <button class="nav-button" onclick="window.location.href='/control_panel'">Control Panel</button>
             {% endif %}
@@ -297,26 +300,61 @@
             <button class="nav-button" onclick="window.location.href='/login'">Login with Discord</button>
         {% endif %}
 
-        {% if raffle_data %}
-            <h2>Current Raffles</h2>
+        {% if active_raffles %}
+            <h2>Active Raffles</h2>
             <table class="raffle-table">
                 <thead>
                     <tr>
                         <th>Guild Name</th>
                         <th>Status</th>
+                        {% if session.is_admin %}
+                            <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for guild_id, data in raffle_data.items() %}
+                    {% for guild_id, data in active_raffles.items() %}
                         <tr>
                             <td>{{ data.name }}</td>
                             <td>{{ data.status }}</td>
+                            {% if session.is_admin %}
+                                <td>
+                                    <button class="nav-button" onclick="window.location.href='/edit_raffle/{{ guild_id }}'">Edit</button>
+                                    <button class="nav-button" onclick="window.location.href='/end_raffle/{{ guild_id }}'">End</button>
+                                </td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% else %}
-            <p>No raffles found. You must be signed in to see this.</p>
+            <p>No active raffles found.</p>
+        {% endif %}
+
+        {% if raffle_history %}
+            <h2>Raffle History</h2>
+            <table class="raffle-table">
+                <thead>
+                    <tr>
+                        <th>Guild Name</th>
+                        <th>Status</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for raffle in raffle_history %}
+                        <tr>
+                            <td>{{ raffle.name }}</td>
+                            <td>{{ raffle.status }}</td>
+                            <td>{{ raffle.start_time }}</td>
+                            <td>{{ raffle.end_time }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No raffle history found.</p>
         {% endif %}
     </div>
     <script>

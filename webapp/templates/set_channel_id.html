@@ -243,17 +243,23 @@
             <div id="user-info-menu">
                 <p>Logged in as: <span id="user-name">Unknown</span></p>
                 <p>Email: <span id="user-email">Unknown</span></p>
+                <a href="/logout">Logout</a>
+                {% if session.is_admin %}
+                    <a href="/control_panel">Control Panel</a>
+                {% endif %}
             </div>
-            <a href="/logout">Logout</a>
-            {% if session.is_admin %}
-                <a href="/control_panel">Control Panel</a>
-            {% endif %}
         {% else %}
-            <a href="/login">Login</a>
+            <div id="user-info-menu">
+                <a href="/login">Login</a>
+            </div>
         {% endif %}
         <a href="/">Home</a>
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/tos">Terms of Service</a>
+        {% if session.is_admin %}
+            <a href="/control_panel">Control Panel</a>
+        {% endif %}
+    </div>
+    <div style="position: absolute; bottom: 0; width: 100%; text-align: center;">
+        <a href="https://gameproductions.net/privacy">Privacy Policy</a> | <a href="https://gameproductions.net/tos">Terms of Service</a>
     </div>
     <div class="container">
         <h1>Set Channel ID</h1>
