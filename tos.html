@@ -72,81 +72,6 @@
                 color: #64b5f6;
             }
         }
-        /* Hamburger Menu Styles */
-        .hamburger-menu {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            cursor: pointer;
-        }
-
-        .bar {
-            width: 30px;
-            height: 3px;
-            background-color: #333;
-            margin: 6px 0;
-            transition: 0.4s;
-        }
-
-        .change .bar1 {
-            -webkit-transform: rotate(-45deg) translate(-9px, 6px);
-            transform: rotate(-45deg) translate(-9px, 6px);
-        }
-
-        .change .bar2 {
-            opacity: 0;
-        }
-
-        .change .bar3 {
-            -webkit-transform: rotate(45deg) translate(-8px, -8px);
-            transform: rotate(45deg) translate(-8px, -8px);
-        }
-
-        .menu {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1000;
-            top: 0;
-            left: 0;
-            background-color: rgba(0,0,0, 0.9);
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 60px;
-        }
-
-        .menu a {
-            padding: 8px 8px 8px 32px;
-            text-decoration: none;
-            font-size: 25px;
-            color: #818181;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .menu a:hover {
-            color: #f1f1f1;
-        }
-
-        .menu .closebtn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-        }
-
-        @media screen and (max-height: 450px) {
-            .menu {padding-top: 50px;}
-            .menu a {font-size: 20px;}
-        }
-        /* Dark mode styles for hamburger menu */
-        @media (prefers-color-scheme: dark) {
-            .hamburger-menu .bar {
-                background-color: #eee; /* Adjust color for dark mode */
-            }
-        }
 
         #user-info-menu {
             color: #eee;
@@ -162,32 +87,6 @@
     </style>
 </head>
 <body class="">
-    <div class="hamburger-menu">
-        <div class="bar bar1"></div>
-        <div class="bar bar2"></div>
-        <div class="bar bar3"></div>
-    </div>
-
-    <div id="myMenu" class="menu">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeMenu()">×</a>
-        {% if session.logged_in %}
-            <div id="user-info-menu">
-                <p>Logged in as: <span id="user-name">Unknown</span></p>
-                <p>Email: <span id="user-email">Unknown</span></p>
-                <p>Discord Status: <span id="discord-status">Offline</span></p>
-            </div>
-            <a href="/logout">Logout</a>
-            {% if session.is_admin %}
-                <a href="/control_panel">Control Panel</a>
-            {% endif %}
-        {% else %}
-            <a href="/login">Login</a>
-        {% endif %}
-        <a href="/">Home</a>
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/tos">Terms of Service</a>
-    </div>
-
     <div class="container">
         <h1>Terms of Service</h1>
 
@@ -234,23 +133,9 @@
         <p>gprdb_privacy@gameproductions.net</p>
     </div>
     <script>
-        function openMenu() {
-            document.getElementById("myMenu").style.width = "250px";
-        }
-
-        function closeMenu() {
-            document.getElementById("myMenu").style.width = "0";
-            document.querySelector('.hamburger-menu').classList.remove("change");
-        }
-
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.body.classList.add('dark-mode');
         }
-
-        document.querySelector('.hamburger-menu').addEventListener('click', function() {
-            openMenu();
-            this.classList.toggle("change");
-        });
     </script>
 </body>
 </html>
