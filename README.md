@@ -74,21 +74,110 @@ Before you begin, ensure you have met the following requirements:
 
     *   Replace the placeholder values with your actual values.
 
+## Docker Compose Installation
+
+1.  Ensure you have Docker and Docker Compose installed.
+
+2.  Create a `docker-compose.yml` file in the root directory of the project:
+
+    ```yaml
+    version: "3.8"
+    services:
+      webapp:
+        build: ./webapp
+        ports:
+          - "5000:5000"
+        environment:
+          - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+          - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+          - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+          - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+          - DISCORD_PUBLIC_KEY=${DISCORD_PUBLIC_KEY}
+          - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+          - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+          - POSTGRES_DB=${POSTGRES_DB}
+          - POSTGRES_HOST=${POSTGRES_HOST}
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          - POSTGRES_PORT=${POSTGRES_PORT}
+          - POSTGRES_USER=${POSTGRES_USER}
+          - REDIS_HOST=${REDIS_HOST}
+          - REDIS_PORT=${REDIS_PORT}
+          - CHANNEL_ID=${CHANNEL_ID}
+          - DATA_FOLDER_PATH=${DATA_FOLDER_PATH}
+          - DISCORD_ADMIN_ROLE_ID=${DISCORD_ADMIN_ROLE_ID}
+          - UID=${UID}
+          - PGID=${PGID}
+          - WEBAPP_PORT=${WEBAPP_PORT}
+        depends_on:
+          - postgres
+          - redis
+        volumes:
+          - ./webapp:/app
+      bot:
+        build: ./bot
+        environment:
+          - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+          - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+          - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+          - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+          - DISCORD_PUBLIC_KEY=${DISCORD_PUBLIC_KEY}
+          - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+          - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+          - POSTGRES_DB=${POSTGRES_DB}
+          - POSTGRES_HOST=${POSTGRES_HOST}
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          - POSTGRES_PORT=${POSTGRES_PORT}
+          - POSTGRES_USER=${POSTGRES_USER}
+          - REDIS_HOST=${REDIS_HOST}
+          - REDIS_PORT=${REDIS_PORT}
+          - CHANNEL_ID=${CHANNEL_ID}
+          - DATA_FOLDER_PATH=${DATA_FOLDER_PATH}
+          - DISCORD_ADMIN_ROLE_ID=${DISCORD_ADMIN_ROLE_ID}
+          - UID=${UID}
+          - PGID=${PGID}
+          - WEBAPP_PORT=${WEBAPP_PORT}
+        depends_on:
+          - postgres
+          - redis
+        volumes:
+          - ./bot:/app
+      postgres:
+        image: postgres:13
+        ports:
+          - "5432:5432"
+        environment:
+          - POSTGRES_USER=${POSTGRES_USER}
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          - POSTGRES_DB=${POSTGRES_DB}
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+      redis:
+        image: redis:latest
+        ports:
+          - "6379:6379"
+        volumes:
+          - redis_data:/data
+
+    volumes:
+      postgres_data:
+      redis_data:
+    ```
+
+3.  Run Docker Compose:
+
+    ```bash
+    docker-compose up -d
+    ```
+
 ## Usage
 
 1.  Start the Discord bot:
 
-    ```bash
-    cd bot
-    python bot.py
-    ```
+    This will be handled by docker-compose
 
 2.  Start the Flask web application:
 
-    ```bash
-    cd webapp
-    python app.py
-    ```
+    This will be handled by docker-compose
 
 3.  Access the web dashboard in your browser at `http://localhost:5000`.
 
