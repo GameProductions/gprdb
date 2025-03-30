@@ -147,19 +147,6 @@ async def on_ready():
         print(f"Error generating invite link: {e}")
 
 
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-
-    print(f"Message from {message.author}: {message.content}")
-
-    if message.content.startswith("!hello"):
-        await message.channel.send("Hello!")
-
-    await bot.process_commands(message)
-
-
 # Flask Routes
 @app.route("/")
 def index():

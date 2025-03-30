@@ -180,6 +180,21 @@
             margin: 5px 0;
             font-size: 16px;
         }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
+            padding: 10px;
+        }
+
+        body.dark-mode footer {
+            background-color: #121212;
+            color: #eee;
+        }
     </style>
 </head>
 <body>
@@ -213,10 +228,6 @@
         {% endif %}
     </div>
 
-    <div style="position: absolute; bottom: 0; width: 100%; text-align: center;">
-        <a href="https://gameproductions.net/privacy">Privacy Policy</a> | <a href="https://gameproductions.net/tos">Terms of Service</a>
-    </div>
-
     <div class="container">
         <h1>Admin Dashboard</h1>
 
@@ -232,7 +243,6 @@
 
         <h2>Raffle Controls</h2>
         <form action="/start_raffle" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="raffle_name">Raffle Name:</label>
             <input type="text" id="raffle_name" name="raffle_name" required><br><br>
 
@@ -247,65 +257,55 @@
         </form>
 
         <form action="/end_raffle" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <button type="submit">End Raffle</button>
         </form>
 
         <form action="/set_participant_limit" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="participant_limit">Participant Limit:</label>
             <input type="number" id="participant_limit" name="participant_limit" required><br><br>
             <button type="submit">Set Participant Limit</button>
         </form>
 
         <form action="/set_entry_limit" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="entry_limit">Entry Limit:</label>
             <input type="number" id="entry_limit" name="entry_limit" required><br><br>
             <button type="submit">Set Entry Limit</button>
         </form>
 
         <form action="/set_webhook_url" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="webhook_url">Webhook URL:</label>
             <input type="text" id="webhook_url" name="webhook_url" required><br><br>
             <button type="submit">Set Webhook URL</button>
         </form>
 
         <form action="/set_admin_role" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="admin_role_id">Admin Role ID:</label>
             <input type="number" id="admin_role_id" name="admin_role_id" required><br><br>
             <button type="submit">Set Admin Role</button>
         </form>
 
         <form action="/set_raffle_channel" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="raffle_channel_id">Raffle Channel ID:</label>
             <input type="number" id="raffle_channel_id" name="raffle_channel_id" required><br><br>
             <button type="submit">Set Raffle Channel</button>
         </form>
 
         <form action="/set_lucky_number" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="lucky_number">Lucky Number:</label>
             <input type="number" id="lucky_number" name="lucky_number" required><br><br>
             <button type="submit">Set Lucky Number</button>
         </form>
 
         <form action="/clear_raffle" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <button type="submit">Clear Raffle</button>
         </form>
 
         <form action="/archive_raffle" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <button type="submit">Archive Raffle</button>
         </form>
         
         <h2>Create Test Raffle</h2>
         <form action="/create_test_raffle" method="post" accept-charset="UTF-8">
-            {{ csrf_token() }}
             <label for="test_raffle_name">Test Raffle Name:</label>
             <input type="text" id="test_raffle_name" name="test_raffle_name" required><br><br>
             
@@ -342,5 +342,8 @@
             this.classList.toggle("change");
         });
     </script>
+    <footer>
+        <a href="https://gameproductions.net/privacy">Privacy Policy</a> | <a href="https://gameproductions.net/tos">Terms of Service</a>
+    </footer>
 </body>
 </html>
