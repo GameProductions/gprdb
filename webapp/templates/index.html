@@ -22,6 +22,9 @@
             color: #0078d7;
             transition: color 0.3s ease;
         }
+        a:hover {
+            text-decoration: underline;
+        }
         a.dark-mode {
             color: #64b5f6;
         }
@@ -113,16 +116,16 @@
         .dark-mode .nav-button:hover {
             background-color: #495696;
         }
-        #user-info {
+        #user-info-menu {
             background-color: rgba(255, 255, 255, 0.8);
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             color: #333;
-            margin-bottom: 20px; /* Add margin to separate from content */
+            margin-bottom: 20px;
         }
-        #user-info.dark-mode {
+        #user-info-menu.dark-mode {
             background-color: rgba(64, 64, 64, 0.8);
             color: #eee;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
@@ -130,143 +133,125 @@
         .container {
             display: flex;
             flex-direction: column;
-            align-items: flex-start; /* Align items to the start of the container */
+            align-items: flex-start;
             padding: 20px;
         }
-        /* Hamburger Menu Styles */
-        .hamburger-menu {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            cursor: pointer;
-        }
 
-        .bar {
-            width: 30px;
-            height: 3px;
-            background-color: #333;
-            margin: 6px 0;
-            transition: 0.4s;
-        }
-
-        .change .bar1 {
-            -webkit-transform: rotate(-45deg) translate(-9px, 6px);
-            transform: rotate(-45deg) translate(-9px, 6px);
-        }
-
-        .change .bar2 {
-            opacity: 0;
-        }
-
-        .change .bar3 {
-            -webkit-transform: rotate(45deg) translate(-8px, -8px);
-            transform: rotate(45deg) translate(-8px, -8px);
-        }
-
-        .menu {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1000;
-            top: 0;
-            left: 0;
-            background-color: rgba(0,0,0, 0.9);
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 60px;
-        }
-
-        .menu a {
-            padding: 8px 8px 8px 32px;
-            text-decoration: none;
-            font-size: 25px;
-            color: #818181;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .menu a:hover {
-            color: #f1f1f1;
-        }
-
-        .menu .closebtn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-        }
-
-        @media screen and (max-height: 450px) {
-            .menu {padding-top: 50px;}
-            .menu a {font-size: 20px;}
-        }
-        .dark-mode .bar {
-            background-color: #eee;
-        }
-
-        #user-info-menu {
+        .dark-mode .container {
+            background-color: #212121;
             color: #eee;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #555;
         }
-
-        #user-info-menu p {
-            margin: 5px 0;
-            font-size: 16px;
-        }
-
         .raffle-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-
         .raffle-table th,
         .raffle-table td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
-
         .raffle-table th {
             background-color: #f2f2f2;
         }
-
         .raffle-table tbody tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header.dark-mode {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        header nav a {
+            margin: 0 10px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        header.dark-mode nav a {
+            color: #eee;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
+            padding: 10px;
+        }
+
+        body.dark-mode footer {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #f0f0f0;
+                color: #333;
+            }
+            .container {
+                background-color: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            h1, h2 {
+                color: #2c3e50;
+            }
+            a {
+                color: #0078d7;
+            }
+        }
+
+        .admin-flair {
+            display: inline-block;
+            padding: 2px 5px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 5px;
         }
     </style>
 </head>
 <body class="">
-    <div class="hamburger-menu">
-        <div class="bar bar1"></div>
-        <div class="bar bar2"></div>
-        <div class="bar bar3"></div>
-    </div>
-
-    <div id="myMenu" class="menu">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeMenu()">×</a>
-        {% if session.logged_in %}
-            <div id="user-info-menu">
-                <p>Logged in as: <span id="user-name">{{ session.user.username }}</span></p>
-                <p>Email: <span id="user-email">{{ session.user.email }}</span></p>
-                <p>Discord ID: <span id="user-id">{{ session.user.id }}</span></p>
-                <p>Admin: {% if session.is_admin %}Yes{% else %}No{% endif %}</p>
-                <a href="/logout">Logout</a>
-            </div>
-        {% else %}
-            <div id="user-info-menu">
-                <a href="/login">Login</a>
-            </div>
-        {% endif %}
-        <a href="/">Home</a>
-        {% if session.is_admin %}
-            <a href="/control_panel">Control Panel</a>
-        {% endif %}
-    </div>
+    <header class="">
+        <div>
+            {% if session.logged_in %}
+                <div id="user-info-menu">
+                    <p>Logged in as: <span id="user-name">{{ session.user.username }}</span>
+                        {% if session.is_admin %}
+                            <span class="admin-flair">Admin</span>
+                        {% else %}
+                            <span class="admin-flair">User</span>
+                        {% endif %}
+                    </p>
+                    <a href="/logout">Logout</a>
+                </div>
+            {% else %}
+                <div id="user-info-menu">
+                    <button class="nav-button" onclick="window.location.href='/login'">Login with Discord</button>
+                </div>
+            {% endif %}
+        </div>
+        <nav class="">
+            <a href="/">Home</a>
+            {% if session.logged_in and session.is_admin %}
+                <a href="/dashboard">Dashboard</a>
+            {% endif %}
+        </nav>
+    </header>
 
     <div class="dark-mode-switch">
         <label>Dark Mode</label>
@@ -289,13 +274,9 @@
         {% endwith %}
 
         {% if session.logged_in %}
-            {% if session.is_admin %}
-                <button class="nav-button" onclick="window.location.href='/control_panel'">Control Panel</button>
-            {% endif %}
         {% else %}
             <button class="nav-button" onclick="window.location.href='/login'">Login with Discord</button>
         {% endif %}
-
         {% if active_raffles %}
             <h2>Active Raffles</h2>
             <table class="raffle-table">
@@ -303,6 +284,7 @@
                     <tr>
                         <th>Guild Name</th>
                         <th>Status</th>
+                        <th>Actions</th>
                         {% if session.is_admin %}
                             <th>Actions</th>
                         {% endif %}
@@ -316,11 +298,9 @@
                             {% if session.is_admin %}
                                 <td>
                                     <form method="POST" action="/edit_raffle/{{ guild_id }}">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                         <button class="nav-button" type="submit">Edit</button>
                                     </form>
                                     <form method="POST" action="/end_raffle/{{ guild_id }}">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                         <button class="nav-button" type="submit">End</button>
                                     </form>
                                 </td>
@@ -362,19 +342,14 @@
     <script>
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const body = document.body;
-        const links = document.querySelectorAll('a');
-        const labels = document.querySelectorAll('label');
-        const buttons = document.querySelectorAll('.nav-button');
-        const userInfoDiv = document.getElementById('user-info');
-
+        const header = document.querySelector('header');
+        const nav = document.querySelector('header nav');
 
         // Function to toggle dark mode
         function toggleDarkMode() {
             body.classList.toggle('dark-mode');
-            links.forEach(link => link.classList.toggle('dark-mode'));
-            labels.forEach(label => label.classList.toggle('dark-mode'));
-            buttons.forEach(button => button.classList.toggle('dark-mode'));
-            userInfoDiv.classList.toggle('dark-mode');
+            header.classList.toggle('dark-mode');
+            nav.classList.toggle('dark-mode');
             // Store the user's preference in localStorage
             localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
         }
@@ -383,27 +358,13 @@
         if (localStorage.getItem('darkMode') === 'enabled') {
             toggleDarkMode(); // Apply dark mode if it was previously enabled
             darkModeToggle.checked = true; // Update the checkbox state
-        }  else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-             toggleDarkMode();
-             darkModeToggle.checked = true;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            toggleDarkMode();
+            darkModeToggle.checked = true;
         }
 
         // Event listener for the dark mode toggle
         darkModeToggle.addEventListener('change', toggleDarkMode);
-
-        document.querySelector('.hamburger-menu').addEventListener('click', function() {
-            openMenu();
-            this.classList.toggle("change");
-        });
-
-        function openMenu() {
-            document.getElementById("myMenu").style.width = "250px";
-        }
-
-        function closeMenu() {
-            document.getElementById("myMenu").style.width = "0";
-            document.querySelector('.hamburger-menu').classList.remove("change");
-        }
     </script>
     <footer>
         <a href="https://gameproductions.net/privacy">Privacy Policy</a> | <a href="https://gameproductions.net/tos">Terms of Service</a>

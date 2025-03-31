@@ -12,7 +12,28 @@
             margin: 0;
             padding: 20px;
             line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
+        body.dark-mode {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        .dark-mode h1,
+        .dark-mode h2 {
+            color: #fff;
+        }
+
+        a {
+            color: #0078d7;
+            transition: color 0.3s ease;
+        }
+
+        a.dark-mode {
+            color: #64b5f6;
+        }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -21,6 +42,12 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        .dark-mode .container {
+            background-color: #212121;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
         h1 {
             color: #2c3e50;
             margin-bottom: 20px;
@@ -56,22 +83,6 @@
         a:hover {
             text-decoration: underline;
         }
-       @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #121212;
-                color: #eee;
-            }
-            .container {
-                background-color: #212121;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            }
-            h1, h2 {
-                color: #fff;
-            }
-             a {
-                color: #64b5f6;
-            }
-        }
 
         #user-info-menu {
             color: #eee;
@@ -83,6 +94,43 @@
         #user-info-menu p {
             margin: 5px 0;
             font-size: 16px;
+        }
+
+        body.dark-mode footer {
+            background-color: #121212;
+            color: #eee;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        header.dark-mode {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        header nav a {
+            margin: 0 10px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        header.dark-mode nav a {
+            color: #eee;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
+            padding: 10px;
         }
     </style>
 </head>
@@ -133,9 +181,20 @@
         <p>gprdb_privacy@gameproductions.net</p>
     </div>
     <script>
+        const body = document.body;
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.classList.add('dark-mode');
+            body.classList.add('dark-mode');
+        }
+
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            body.classList.toggle('dark-mode');
+            // Store the user's preference in localStorage
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
         }
     </script>
+     <footer>
+        <a href="https://gameproductions.net/privacy">Privacy Policy</a> | <a href="https://gameproductions.net/tos">Terms of Service</a>
+    </footer>
 </body>
 </html>

@@ -3,19 +3,19 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, flash
 import discord
 from discord.ext import commands
-import requests
+import requests # type: ignore
 from urllib.parse import quote_plus
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf import FlaskForm # type: ignore
+from wtforms import StringField, SubmitField # type: ignore
+from wtforms.validators import DataRequired # type: ignore
+from flask_wtf.csrf import CSRFProtect # type: ignore
 import logging
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from flask_session import Session
-import redis
+from flask_limiter import Limiter # type: ignore
+from flask_limiter.util import get_remote_address # type: ignore
+from flask_session import Session # type: ignore
+import redis # type: ignore
 import multiprocessing
 from multiprocessing import Queue
 import traceback
@@ -150,96 +150,7 @@ async def on_ready():
 # Flask Routes
 @app.route("/")
 def index():
-    return render_template("index.html", user=session.get("user"), is_admin=session.get("is_admin"))
-
-
-@app.route("/control_panel")
-def control_panel():
-    if not session.get("logged_in"):
-        flash("You must be logged in to access the control panel.", "error")
-        return redirect(url_for("login"))
-    if not session.get("is_admin"):
-        flash("You must be an admin to access the control panel.", "error")
-        return redirect(url_for("index"))
-    return render_template(
-        "control_panel.html",
-        user=session.get("user"),
-        is_admin=session.get("is_admin"),
-        channel_id=discord_channel_id,
-        guild_id=discord_guild_id,
-        admin_role_id=discord_admin_role_id
-    )
-
-
-class ChannelIDForm(FlaskForm):
-    channel_id = StringField("Channel ID", validators=[DataRequired()])
-    submit = SubmitField("Set Channel ID")
-
-
-@app.route("/set_channel_id", methods=["POST"])
-def set_channel_id():
-    """Sets the channel ID for the bot."""
-    if not session.get("logged_in"):
-        return jsonify({"status": "error", "message": "You must be logged in to access this page."}), 403
-
-    try:
-        data = request.get_json()
-        new_channel_id = data.get("channel_id")
-        csrf_token = data.get("csrf_token")
-
-        if not new_channel_id:
-            return jsonify({"status": "error", "message": "Channel ID is required."}), 400
-
-        # Validate CSRF token
-        if not csrf.validate(csrf_token):
-            return jsonify({"status": "error", "message": "Invalid CSRF token."}), 400
-
-        global discord_channel_id
-        discord_channel_id = new_channel_id
-        print(f"Channel ID set to {discord_channel_id}")
-        return jsonify({"status": "success", "message": f"Channel ID set to {discord_channel_id}"}), 200
-
-    except Exception as e:
-        print(f"Error setting channel ID: {e}")
-        return jsonify({"status": "error", "message": "An error occurred while setting the channel ID."}), 500
-
-
-@app.route("/set_guild_id", methods=["POST"])
-def set_guild_id():
-    """Sets the guild ID for the bot."""
-    new_guild_id = request.form["guild_id"]
-    global discord_guild_id
-    discord_guild_id = new_guild_id
-    print(f"Guild ID set to {discord_guild_id}")
-    return redirect(url_for("control_panel"))
-
-
-@app.route("/set_admin_role_id", methods=["POST"])
-def set_admin_role_id():
-    """Sets the admin role ID for the bot."""
-    new_admin_role_id = request.form["admin_role_id"]
-    global discord_admin_role_id
-    discord_admin_role_id = new_admin_role_id
-    print(f"Admin role ID set to {discord_admin_role_id}")
-    return redirect(url_for("control_panel"))
-
-
-@app.route("/get_channel_id", methods=["GET"])
-def get_channel_id():
-    """Returns the current channel ID."""
-    return jsonify({"channel_id": discord_channel_id})
-
-
-@app.route("/get_guild_id", methods=["GET"])
-def get_guild_id():
-    """Returns the current guild ID."""
-    return jsonify({"guild_id": discord_guild_id})
-
-
-@app.route("/get_admin_role_id", methods=["GET"])
-def get_admin_role_id():
-    """Returns the current admin role ID."""
-    return jsonify({"admin_role_id": discord_admin_role_id})
+    return render_template("templates/index.html", user=session.get("user"), is_admin=session.get("is_admin"))
 
 
 @app.route("/discord")
@@ -386,295 +297,72 @@ def execute_bot_command(command):
     print(f"Command '{command}' added to the queue.")
 
 
-@app.route("/dashboard")
+@app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
-    """Renders the admin dashboard."""
+    """Renders the admin dashboard and handles form submissions."""
     if not session.get("logged_in"):
         flash("You must be logged in to access the dashboard.", "error")
         return redirect(url_for("login"))
     if not session.get("is_admin"):
         flash("You must be an admin to access the dashboard.", "error")
         return redirect(url_for("index"))
-    return render_template("dashboard.html")
-
-
-# Route to start the raffle
-@app.route("/start_raffle", methods=["POST"])
-def start_raffle():
-    """Starts the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    raffle_name = request.form.get("raffle_name")
-    raffle_type = request.form.get("raffle_type")
-
-    # Basic validation
-    if not raffle_name or not raffle_type:
-        flash("Raffle name and type are required.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the command
-    command = f"!start {raffle_name} {raffle_type}"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash(f"Raffle '{raffle_name}' started successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# New route to create a test raffle
-@app.route("/create_test_raffle", methods=["POST"])
-def create_test_raffle():
-    """Creates a test raffle with sample participants."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    test_raffle_name = request.form.get("test_raffle_name")
-    test_raffle_type = request.form.get("test_raffle_type")
-    num_test_entries = int(request.form.get("num_test_entries", 5))
-
-    # Basic validation
-    if not test_raffle_name or not test_raffle_type:
-        flash("Raffle name and type are required.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the start command
-    start_command = f"!start {test_raffle_name} {test_raffle_type}"
-    execute_bot_command(start_command)
-
-    # Add test participants
-    for i in range(1, num_test_entries + 1):
-        add_command = f"!add TestUser{i} {i}"
-        execute_bot_command(add_command)
-
-    flash(f"Test raffle '{test_raffle_name}' created with {num_test_entries} participants!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to end the raffle
-@app.route("/end_raffle", methods=["POST"])
-def end_raffle():
-    """Ends the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    # Construct the command
-    command = "!end"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash("Raffle ended successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to set the participant limit
-@app.route("/set_participant_limit", methods=["POST"])
-def set_participant_limit():
-    """Sets the participant limit for the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    participant_limit = request.form.get("participant_limit")
-
-    # Basic validation
-    if not participant_limit or not participant_limit.isdigit():
-        flash("Invalid participant limit.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the command
-    command = f"!setlimit {participant_limit}"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash(f"Participant limit set to {participant_limit} successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to set the entry limit
-@app.route("/set_entry_limit", methods=["POST"])
-def set_entry_limit():
-    """Sets the entry limit for the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    entry_limit = request.form.get("entry_limit")
-
-    # Basic validation
-    if not entry_limit or not entry_limit.isdigit():
-        flash("Invalid entry limit.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the command
-    command = f"!setentrylimit {entry_limit}"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash(f"Entry limit set to {entry_limit} successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to set the webhook URL
-@app.route("/set_webhook_url", methods=["POST"])
-def set_webhook_url():
-    """Sets the webhook URL for the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    webhook_url = request.form.get("webhook_url")
-
-    # Basic validation
-    if not webhook_url:
-        flash("Webhook URL is required.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the command
-    command = f"!setwebhook {webhook_url}"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash(f"Webhook URL set to {webhook_url} successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to set the admin role
-@app.route("/set_admin_role", methods=["POST"])
-def set_admin_role():
-    """Sets the admin role for the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    admin_role_id = request.form.get("admin_role_id")
-
-    # Basic validation
-    if not admin_role_id or not admin_role_id.isdigit():
-        flash("Invalid admin role ID.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the command
-    command = f"!setadminrole {admin_role_id}"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash(f"Admin role set to {admin_role_id} successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to set the raffle channel
-@app.route("/set_raffle_channel", methods=["POST"])
-def set_raffle_channel():
-    """Sets the raffle channel for the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    raffle_channel_id = request.form.get("raffle_channel_id")
-
-    # Basic validation
-    if not raffle_channel_id or not raffle_channel_id.isdigit():
-        flash("Invalid raffle channel ID.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the command
-    command = f"!setchannel {raffle_channel_id}"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash(f"Raffle channel set to {raffle_channel_id} successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to set the lucky number
-@app.route("/set_lucky_number", methods=["POST"])
-def set_lucky_number():
-    """Sets the lucky number for the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    lucky_number = request.form.get("lucky_number")
-
-    # Basic validation
-    if not lucky_number or not lucky_number.isdigit():
-        flash("Invalid lucky number.", "error")
-        return redirect(url_for("dashboard"))
-
-    # Construct the command
-    command = f"!setluckynumber {lucky_number}"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash(f"Lucky number set to {lucky_number} successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to clear the raffle
-@app.route("/clear_raffle", methods=["POST"])
-def clear_raffle():
-    """Clears the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    # Construct the command
-    command = "!clear"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash("Raffle cleared successfully!", "success")
-    return redirect(url_for("dashboard"))
-
-
-# Route to archive the raffle
-@app.route("/archive_raffle", methods=["POST"])
-def archive_raffle():
-    """Archives the raffle."""
-    if not session.get("logged_in") or not session.get("is_admin"):
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
-
-    # Construct the command
-    command = "!archive"
-
-    # Execute the command
-    execute_bot_command(command)
-
-    flash("Raffle archived successfully!", "success")
-    return redirect(url_for("dashboard"))
+    csrf_token = csrf.generate_csrf()  # Generate CSRF token outside the if block
+    if request.method == "POST":
+        # Validate CSRF token
+        csrf_token = request.form.get("csrf_token")
+        if not csrf.validate(csrf_token):
+            flash("Invalid CSRF token.", "error")
+            return redirect(url_for("dashboard"))
+        # Handle channel ID submission
+        new_channel_id = request.form.get("channel_id")
+
+        if new_channel_id:
+
+            global discord_channel_id
+            discord_channel_id = new_channel_id
+            os.environ["CHANNEL_ID"] = new_channel_id
+            flash(f"Channel ID set to {discord_channel_id}", "success")
+            return redirect(url_for("dashboard"))
+        # Handle guild ID submission
+        new_guild_id = request.form.get("guild_id")
+        if new_guild_id:
+
+            global discord_guild_id
+            discord_guild_id = new_guild_id
+            os.environ["DISCORD_GUILD_ID"] = new_guild_id
+            flash(f"Guild ID set to {discord_guild_id}", "success")
+            return redirect(url_for("dashboard"))
+        # Handle admin role ID submission;
+        new_admin_role_id = request.form.get("admin_role_id")
+        if new_admin_role_id:
+
+            global discord_admin_role_id
+            discord_admin_role_id = new_admin_role_id
+            os.environ["DISCORD_ADMIN_ROLE_ID"] = new_admin_role_id
+            flash(f"Admin role ID set to {discord_admin_role_id}", "success")
+            return redirect(url_for("dashboard"))
+    return render_template("dashboard.html",
+        channel_id=discord_channel_id,
+        guild_id=discord_guild_id,
+        admin_role_id=discord_admin_role_id,
+        csrf_token=csrf_token
+    )
 
 
 def run_flask_app(queue):
-    """Runs the Flask app."""
-    app.queue = queue  # Store the queue in the app
+    app.queue = queue
     app.run(debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":
-    # Create a command queue
-    command_queue = multiprocessing.Queue()
-
-    # Create separate processes for the bot and the web app
-    flask_process = multiprocessing.Process(target=run_flask_app, args=(command_queue,))
-    bot_process = multiprocessing.Process(target=bot.run, args=(os.getenv("DISCORD_BOT_TOKEN"),))
-    # Start the processes
-    flask_process.start()
-    bot_process.start()
-
-    # Wait for the processes to finish (optional)
-    flask_process.join()
-    bot_process.join()
+    try:
+        command_queue = multiprocessing.Queue()
+        flask_process = multiprocessing.Process(target=run_flask_app, args=(command_queue,))
+        bot_process = multiprocessing.Process(target=bot.run, args=(os.getenv("DISCORD_BOT_TOKEN"),))
+        flask_process.start()
+        bot_process.start()
+        flask_process.join()
+        bot_process.join()
+    except Exception as e:
+        print(f"An error occurred during startup: {e}")
+        traceback.print_exc()

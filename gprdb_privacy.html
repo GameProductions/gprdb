@@ -49,21 +49,21 @@
             text-decoration: underline;
         }
 
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #121212;
-                color: #eee;
-            }
-            .container {
-                background-color: #212121;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            }
-            h1, h2 {
-                color: #fff;
-            }
-             a {
-                color: #64b5f6;
-            }
+        body.dark-mode {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        .dark-mode .container {
+            background-color: #212121;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .dark-mode h1, h2 {
+            color: #fff;
+        }
+         .dark-mode a {
+            color: #64b5f6;
         }
 
         #user-info-menu {
@@ -142,8 +142,16 @@
         <p>gprdb_privacy@gameproductions.net</p>
     </div>
      <script>
+        const body = document.body;
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.classList.add('dark-mode');
+            body.classList.add('dark-mode');
+        }
+
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            body.classList.toggle('dark-mode');
+            // Store the user's preference in localStorage
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
         }
     </script>
 </body>
