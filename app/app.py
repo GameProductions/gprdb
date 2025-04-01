@@ -103,7 +103,7 @@ def get_discord_user(access_token):
 
 
 def get_user_guilds(access_token):
-    """    Fetches the guilds the user is in    """
+    """Fetches the guilds the user is in."""
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get(f"{DISCORD_API_BASE_URL}/users/@me/guilds", headers=headers)
     response.raise_for_status()
@@ -118,7 +118,7 @@ def is_admin(user_guilds, guild_id, admin_role_id):
             # This part requires the 'guilds.members.read' scope and a different API endpoint
             # For simplicity, we'll assume the user is an admin if they are in the guild
             # A more robust implementation would check the user's roles in the guild
-            return True
+            return guild["name"]
     return False
 
 
@@ -150,7 +150,7 @@ async def on_ready():
 # Flask Routes
 @app.route("/")
 def index():
-    return render_template("templates/index.html", user=session.get("user"), is_admin=session.get("is_admin"))
+    return render_template("index.html", user=session.get("user"), is_admin=session.get("is_admin"), guild_name=session.get("guild_name"), csrf=csrf)
 
 
 @app.route("/discord")
@@ -216,7 +216,9 @@ def callback():
 
             # Check for admin
             user_guilds = get_user_guilds(access_token)
-            session["is_admin"] = is_admin(user_guilds, DISCORD_GUILD_ID, DISCORD_ADMIN_ROLE_ID)
+            guild_name = is_admin(user_guilds, DISCORD_GUILD_ID, DISCORD_ADMIN_ROLE_ID)
+            session["is_admin"] = True if guild_name else False
+            session["guild_name"] = guild_name if isinstance(guild_name, str) else None
 
             flash("Login successful!", "success")
             return redirect(url_for("index"))  # Redirect to the main page
@@ -224,7 +226,7 @@ def callback():
         except requests.exceptions.RequestException as e:
             logging.error(f"OAuth2 callback: Failed to get user information: {e}")
             flash(f"Failed to get user information: {e}", "error")
-            return redirect(url_for("index"))
+            return redirect(url_for("index"))  # Redirect to the main page
 
     except requests.exceptions.RequestException as e:
         logging.error(f"OAuth2 callback: Failed to exchange code for access token: {e}")
@@ -274,7 +276,7 @@ def interactions():
 
     if interaction_type == 1:  # Ping Interaction
         return jsonify({"type": 1})
-    elif interaction_type == 2: # Command Interaction
+    elif interaction_type == 2:  # Command Interaction
         command_name = data["data"]["name"]
         if command_name == "hello":
             return jsonify({
@@ -302,67 +304,142 @@ def dashboard():
     """Renders the admin dashboard and handles form submissions."""
     if not session.get("logged_in"):
         flash("You must be logged in to access the dashboard.", "error")
-        return redirect(url_for("login"))
-    if not session.get("is_admin"):
-        flash("You must be an admin to access the dashboard.", "error")
         return redirect(url_for("index"))
-    csrf_token = csrf.generate_csrf()  # Generate CSRF token outside the if block
-    if request.method == "POST":
-        # Validate CSRF token
-        csrf_token = request.form.get("csrf_token")
-        if not csrf.validate(csrf_token):
-            flash("Invalid CSRF token.", "error")
-            return redirect(url_for("dashboard"))
-        # Handle channel ID submission
-        new_channel_id = request.form.get("channel_id")
-
-        if new_channel_id:
-
-            global discord_channel_id
-            discord_channel_id = new_channel_id
-            os.environ["CHANNEL_ID"] = new_channel_id
-            flash(f"Channel ID set to {discord_channel_id}", "success")
-            return redirect(url_for("dashboard"))
-        # Handle guild ID submission
-        new_guild_id = request.form.get("guild_id")
-        if new_guild_id:
-
-            global discord_guild_id
-            discord_guild_id = new_guild_id
-            os.environ["DISCORD_GUILD_ID"] = new_guild_id
-            flash(f"Guild ID set to {discord_guild_id}", "success")
-            return redirect(url_for("dashboard"))
-        # Handle admin role ID submission;
-        new_admin_role_id = request.form.get("admin_role_id")
-        if new_admin_role_id:
-
-            global discord_admin_role_id
-            discord_admin_role_id = new_admin_role_id
-            os.environ["DISCORD_ADMIN_ROLE_ID"] = new_admin_role_id
-            flash(f"Admin role ID set to {discord_admin_role_id}", "success")
-            return redirect(url_for("dashboard"))
-    return render_template("dashboard.html",
-        channel_id=discord_channel_id,
-        guild_id=discord_guild_id,
-        admin_role_id=discord_admin_role_id,
-        csrf_token=csrf_token
-    )
-
-
-def run_flask_app(queue):
-    app.queue = queue
-    app.run(debug=True, use_reloader=False)
-
-
-if __name__ == "__main__":
     try:
-        command_queue = multiprocessing.Queue()
-        flask_process = multiprocessing.Process(target=run_flask_app, args=(command_queue,))
-        bot_process = multiprocessing.Process(target=bot.run, args=(os.getenv("DISCORD_BOT_TOKEN"),))
-        flask_process.start()
-        bot_process.start()
-        flask_process.join()
-        bot_process.join()
+        return render_template(
+            "dashboard.html",
+            channel_id=discord_channel_id,
+            guild_id=discord_guild_id,
+            admin_role_id=discord_admin_role_id,
+            csrf=csrf
+        )
     except Exception as e:
-        print(f"An error occurred during startup: {e}")
-        traceback.print_exc()
+        print(f"An error occurred: {e}")
+
+
+def handle_admin_action(endpoint):
+    """Handles admin actions, checking for test mode."""
+    if not session.get("logged_in") or not session.get("is_admin"):
+        flash("You do not have permission to perform this action.", "error")
+        return redirect(url_for("index"))
+
+    is_test = request.form.get("is_test") == "on"  # Check if the checkbox is checked
+
+    if is_test:
+        print(f"Test mode is enabled for {endpoint}")
+        flash(f"Test mode is enabled for {endpoint}", "warning")
+
+    # Perform the action (replace with your actual logic)
+    # For example, you might want to log the action instead of performing it
+    print(f"Performing action: {endpoint} (Test mode: {is_test})")
+    flash(f"Performing action: {endpoint} (Test mode: {is_test})", "info")
+
+    return redirect(url_for("index"))
+
+
+@app.route("/start_raffle", methods=["POST"])
+def start_raffle():
+    """Starts a raffle."""
+    return handle_admin_action("start_raffle")
+
+
+@app.route("/end_raffle", methods=["POST"])
+def end_raffle():
+    """Ends the raffle."""
+    return handle_admin_action("end_raffle")
+
+
+@app.route("/clear_raffle", methods=["POST"])
+def clear_raffle():
+    """Clears the raffle."""
+    return handle_admin_action("clear_raffle")
+
+
+@app.route("/archive_raffle", methods=["POST"])
+def archive_raffle():
+    """Archives the raffle."""
+    return handle_admin_action("archive_raffle")
+
+
+@app.route("/add_participant", methods=["POST"])
+def add_participant():
+    """Adds a participant."""
+    return handle_admin_action("add_participant")
+
+
+@app.route("/remove_participant", methods=["POST"])
+def remove_participant():
+    """Removes a participant."""
+    return handle_admin_action("remove_participant")
+
+
+@app.route("/set_participant_limit", methods=["POST"])
+def set_participant_limit():
+    """Sets the participant limit."""
+    return handle_admin_action("set_participant_limit")
+
+
+@app.route("/set_entry_limit", methods=["POST"])
+def set_entry_limit():
+    """Sets the entry limit."""
+    return handle_admin_action("set_entry_limit")
+
+
+@app.route("/set_raffle_name", methods=["POST"])
+def set_raffle_name():
+    """Sets the raffle name."""
+    return handle_admin_action("set_raffle_name")
+
+
+@app.route("/set_webhook_url", methods=["POST"])
+def set_webhook_url():
+    """Sets the webhook URL."""
+    return handle_admin_action("set_webhook_url")
+
+
+@app.route("/set_admin_role", methods=["POST"])
+def set_admin_role():
+    """Sets the admin role."""
+    return handle_admin_action("set_admin_role")
+
+
+@app.route("/set_raffle_channel", methods=["POST"])
+def set_raffle_channel():
+    """Sets the raffle channel."""
+    return handle_admin_action("set_raffle_channel")
+
+
+@app.route("/set_lucky_number", methods=["POST"])
+def set_lucky_number():
+    """Sets the lucky number."""
+    return handle_admin_action("set_lucky_number")
+
+
+@app.route("/set_all_entry_limit", methods=["POST"])
+def set_all_entry_limit():
+    """Sets the entry limit for all participants."""
+    if not session.get("logged_in") or not session.get("is_admin"):
+        flash("You do not have permission to perform this action.", "error")
+        return redirect(url_for("index"))
+
+    is_test = request.form.get("is_test") == "on"  # Check if the checkbox is checked
+    all_entry_limit = request.form.get("all_entry_limit")
+
+    if is_test:
+        print(f"Test mode is enabled for set_all_entry_limit")
+        flash(f"Test mode is enabled for set_all_entry_limit", "warning")
+
+    # Perform the action (replace with your actual logic)
+    # For example, you might want to log the action instead of performing it
+    print(f"Performing action: set_all_entry_limit (Test mode: {is_test})")
+    flash(f"Performing action: set_all_entry_limit (Test mode: {is_test})", "info")
+
+    if not is_test:
+        # Save to the database (replace with your actual database logic)
+        print(f"Saving action: set_all_entry_limit to the database")
+        flash(f"Saving action: set_all_entry_limit to the database", "success")
+    else:
+        print(f"Skipping database save for set_all_entry_limit due to test mode")
+        flash(f"Skipping database save for set_all_entry_limit due to test mode", "warning")
+
+    return redirect(url_for("index"))

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #eee;
+        }
+        .dark-mode h1, .dark-mode h2 {
+            color: #fff;
+        }
+        a {
+            color: #0078d7;
+            transition: color 0.3s ease;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        a.dark-mode {
+            color: #64b5f6;
+        }
+        .dark-mode-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8); /* Add a semi-transparent white background */
+            border-radius: 5px; /* Optional: round the corners */
+        }
+        .dark-mode-switch label {
+            margin-right: 10px;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+        .dark-mode-switch label.dark-mode {
+            color: #eee;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        .nav-button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-button:hover {
+            background-color: #45a049;
+        }
+        .dark-mode .nav-button {
+            background-color: #5c6bc0;
+            color: #fff;
+        }
+        .dark-mode .nav-button:hover {
+            background-color: #495696;
+        }
+        #user-info-menu {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            color: #333;
+            margin-bottom: 20px; /* Add margin to separate from content */
+        }
+        #user-info-menu.dark-mode {
+            background-color: rgba(64, 64, 64, 0.8);
+            color: #eee;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align items to the start of the container */
+            padding: 20px;
+        }
+
+        .dark-mode .container {
+            background-color: #212121;
+            color: #eee;
+        }
+        .raffle-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .raffle-table th,
+        .raffle-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .raffle-table th {
+            background-color: #f2f2f2;
+        }
+        .raffle-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        header.dark-mode {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        header nav a {
+            margin: 0 10px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        header.dark-mode nav a {
+            color: #eee;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
+            padding: 10px;
+        }
+
+        body.dark-mode footer {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #f0f0f0;
+                color: #333;
+            }
+            .container {
+                background-color: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            h1, h2 {
+                color: #2c3e50;
+            }
+            a {
+                color: #0078d7;
+            }
+        }
+
+        .admin-flair {
+            display: inline-block;
+            padding: 2px 5px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body class="">
+    <header class="">
+        <div>
+            {% if session.logged_in %}
+                <div id="user-info-menu">
+                    <p>Logged in as: <span id="user-name">{{ session.user.username }}</span>
+                        {% if session.is_admin %}
+                            <span class="admin-flair">Admin</span>
+                        {% else %}
+                            <span class="admin-flair">User</span>
+                        {% endif %}
+                    </p>
+                    {% if session.guild_name %}
+                        <p>Discord Server: {{ session.guild_name }}</p>
+                    {% endif %}
+                    <a href="/logout">Logout</a>
+                </div>
+            {% else %}
+                <div>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="dark-mode-switch">
+        <label>Dark Mode</label>
+        <label class="switch">
+            <input type="checkbox" id="dark-mode-toggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+    <div class="container">
+        {% if session.logged_in and session.is_admin %}
+            <h1 style="text-align: center;">Welcome to the gprdb Admin Portal</h1>
+        {% else %}
+            <h1 style="text-align: center;">Welcome to the gprdb Raffle User Page</h1>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% if session.logged_in %}
+        {% else %}
+            <p>You must be logged in to use this page.</p>
+            <button class="nav-button" onclick="window.location.href='/login'">Login with Discord</button>
+        {% endif %}
+
+        {% if session.logged_in %}
+            {% if active_raffles %}
+                <h2>Active Raffles</h2>
+                <table class="raffle-table">
+                    <thead>
+                        <tr>
+                            <th>Guild Name</th>
+                            <th>Status</th>
+                            {% if session.is_admin %}
+                                <th>Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for guild_id, data in active_raffles.items() %}
+                            <tr>
+                                <td>{{ data.name }}</td>
+                                <td>{{ data.status }}</td>
+                                {% if session.is_admin %}
+                                    <td>
+                                        <form method="POST" action="/edit_raffle/{{ guild_id }}">
+                                            <button class="nav-button" type="submit">Edit</button>
+                                        </form>
+                                        <form method="POST" action="/end_raffle/{{ guild_id }}">
+                                            <button class="nav-button" type="submit">End</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No active raffles found.</p>
+            {% endif %}
+
+            {% if raffle_history %}
+                <h2>Raffle History</h2>
+                <table class="raffle-table">
+                    <thead>
+                        <tr>
+                            <th>Guild Name</th>
+                            <th>Status</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for raffle in raffle_history %}
+                            <tr>
+                                <td>{{ raffle.name }}</td>
+                                <td>{{ raffle.status }}</td>
+                                <td>{{ raffle.start_time }}</td>
+                                <td>{{ raffle.end_time }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No raffle history found.</p>
+            {% endif %}
+            
+            {% if session.logged_in and session.is_admin %}
+                <h2>Raffle Management</h2>
+                <form method="POST" action="/start_raffle">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="raffle_name">Raffle Name:</label>
+                    <input type="text" id="raffle_name" name="raffle_name" value="My Awesome Raffle"><br><br>
+                    <label for="raffle_type">Raffle Type:</label>
+                    <select id="raffle_type" name="raffle_type">
+                        <option value="standard" title="The standard raffle will pick a winner at random.">Standard</option>
+                        <option value="lucky_number" title="The lucky number raffle will pick a winner based on who has the lucky number.">Lucky Number</option>
+                        <option value="royal_rumble" title="The royal rumble raffle will eliminate participants over time until one remains.">Royal Rumble</option>
+                    </select><br><br>
+                    <label for="all_entry_limit">Entry Limit for All:</label>
+                    <input type="number" id="all_entry_limit" name="all_entry_limit" value="{{ session.all_entry_limit }}"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Start Raffle</button>
+                </form>
+
+                <h2>Raffle Rules</h2>
+                <div id="standard_rules" style="display:block">
+                    <h3>Standard Raffle Rules</h3>
+                    <p>The standard raffle will pick a winner at random.</p>
+                </div>
+
+                <div id="lucky_number_rules" style="display:none">
+                    <h3>Lucky Number Raffle Rules</h3>
+                    <p>The lucky number raffle will pick a winner based on who has the lucky number.</p>
+                </div>
+
+                <div id="royal_rumble_rules" style="display:none">
+                    <h3>Royal Rumble Raffle Rules</h3>
+                    <p>The royal rumble raffle will eliminate participants over time until one remains.</p>
+                </div>
+
+                <form method="POST" action="/end_raffle">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">End Raffle</button>
+                </form>
+
+                <form method="POST" action="/clear_raffle">
+                </form>
+
+                <form method="POST" action="/archive_raffle">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                     <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Archive Raffle</button>
+                </form>
+
+                <h2>Participant Management</h2>
+                <form method="POST" action="/add_participant">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="user_id">User ID:</label>
+                    <input type="text" id="user_id" name="user_id"><br><br>
+                    <label for="entries">Entries:</label>
+                    <input type="number" id="entries" name="entries" value="1"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Add Participant</button>
+                </form>
+
+                <form method="POST" action="/remove_participant">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="remove_user_id">User ID to Remove:</label>
+                    <input type="text" id="remove_user_id" name="user_id"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Remove Participant</button>
+                </form>
+
+                <form method="POST" action="/set_participant_limit">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="participant_limit">Participant Limit:</label>
+                    <input type="number" id="participant_limit" name="participant_limit" value="{{ session.participant_limit }}"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Set Participant Limit</button>
+                </form>
+
+                <form method="POST" action="/set_entry_limit">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="entry_limit">Entry Limit:</label>
+                    <input type="number" id="entry_limit" name="entry_limit" value="{{ session.entry_limit }}"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Set Entry Limit</button>
+                </form>
+
+                <h2>Settings Configuration</h2>
+                <form method="POST" action="/set_raffle_name">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="set_raffle_name">Set Raffle Name:</label>
+                    <input type="text" id="set_raffle_name" name="raffle_name" value="{{ session.raffle_name }}"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Set Raffle Name</button>
+                </form>
+
+                <form method="POST" action="/set_webhook_url">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="webhook_url">Webhook URL:</label>
+                    <input type="url" id="webhook_url" name="webhook_url" value="{{ session.webhook_url }}"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Set Webhook URL</button>
+                </form>
+
+                <form method="POST" action="/set_admin_role">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="admin_role_id">Admin Role ID:</label>
+                    <input type="text" id="admin_role_id" name="admin_role_id" value="{{ session.admin_role_id }}"><br><br>
+                     <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Set Admin Role</button>
+                </form>
+
+                <form method="POST" action="/set_raffle_channel">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="raffle_channel_id">Raffle Channel ID:</label>
+                    <input type="text" id="raffle_channel_id" name="raffle_channel_id" value="{{ session.raffle_channel_id }}"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Set Raffle Channel</button>
+                </form>
+
+                <form method="POST" action="/set_lucky_number">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label for="lucky_number">Lucky Number:</label>
+                    <input type="number" id="lucky_number" name="lucky_number" value="{{ session.lucky_number }}"><br><br>
+                    <label for="is_test">Test Action:</label>
+                    <input type="checkbox" id="is_test" name="is_test"><br><br>
+                    <button class="nav-button" type="submit">Set Lucky Number</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% if session.logged_in and session.is_admin %}
+    {% endif %}
+    <script>
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const body = document.body;
+        const header = document.querySelector('header');
+
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            body.classList.toggle('dark-mode');
+            header.classList.toggle('dark-mode');
+            // Store the user's preference in localStorage
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
+        }
+
+        // Check for saved preference in localStorage
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            darkModeToggle.checked = true;
+            toggleDarkMode(); // Apply dark mode if it was previously enabled
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            darkModeToggle.checked = true; // Update the checkbox state
+            toggleDarkMode(); // Apply dark mode
+        }
+
+        // Event listener for the dark mode toggle
+        darkModeToggle.addEventListener('change', toggleDarkMode);
+    </script>
+    <footer>
+        <a href="https://gameproductions.net/privacy">Privacy Policy</a> | <a href="https://gameproductions.net/tos">Terms of Service</a>
+    </footer>
+</body>
+</html>

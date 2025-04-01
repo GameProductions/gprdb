@@ -12,12 +12,7 @@ services:
       - gprdb
     depends_on:
       - postgres
-      - webapp
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      - app
 
   postgres:
     container_name: gprdb_postgres
@@ -35,9 +30,9 @@ services:
     networks:
       - gprdb
 
-  webapp:
-    container_name: gprdb_webapp
-    image: morenicano/gprdb_webapp:latest
+  app:
+    container_name: gprdb_app
+    image: morenicano/gprdb_app:latest
     ports:
       - "${WEBAPP_PORT}:5000"
     environment:
@@ -58,23 +53,20 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       UID: ${UID}
     volumes:
-       - ${DATA_FOLDER_PATH}/templates:/app/templates
+      - ${DATA_FOLDER_PATH}/templates:/app/templates
     networks:
       - gprdb
     depends_on:
       - postgres
       - redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
 
   redis:
     container_name: gprdb_redis
     image: redis:latest
     ports:
       - "${REDIS_PORT}:6379"
+    volumes:
+      - ${DATA_FOLDER_PATH}/redis_data:/data
     networks:
       - gprdb
 
