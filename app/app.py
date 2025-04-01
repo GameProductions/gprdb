@@ -10,7 +10,8 @@ from nacl.exceptions import BadSignatureError
 from flask_wtf import FlaskForm # type: ignore
 from wtforms import StringField, SubmitField # type: ignore
 from wtforms.validators import DataRequired # type: ignore
-from flask_wtf.csrf import CSRFProtect # type: ignore
+from flask_wtf.csrf import CSRFProtect, validate_csrf, generate_csrf # type: ignore
+from wtforms import ValidationError # type: ignore
 import logging
 from flask_limiter import Limiter # type: ignore
 from flask_limiter.util import get_remote_address # type: ignore
@@ -20,6 +21,7 @@ import multiprocessing
 from multiprocessing import Queue
 import traceback
 import asyncio
+from datetime import timedelta
 
 load_dotenv()
 
@@ -35,8 +37,20 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 # Configure CSRF protection
 csrf = CSRFProtect(app)
 
+@app.before_request
+def before_request():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=30)
+    session.modified = True
+    if not session.get('csrf_token'):
+         session['csrf_token'] = generate_csrf()
+
 # Configure logging
-logging.basicConfig(level=logging.ERROR)
+# Set up logging
+log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(level=log_level,
+                    format='%(asctime)s [%(levelname)s] %(name)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Configure rate limiting
 limiter = Limiter(
@@ -182,7 +196,7 @@ def callback():
     """Handles the callback from Discord's OAuth2 flow."""
     code = request.args.get("code")
     if not code:
-        logging.error("OAuth2 callback: Missing authorization code.")
+        logger.error("OAuth2 callback: Missing authorization code.")
         flash("Failed to get authorization code.", "error")
         return redirect(url_for("index"))
 
@@ -203,7 +217,7 @@ def callback():
         access_token = token_data.get("access_token")
 
         if not access_token:
-            logging.error("OAuth2 callback: Failed to get access token.")
+            logger.error("OAuth2 callback: Failed to get access token.")
             flash("Failed to get access token.", "error")
             return redirect(url_for("index"))
 
@@ -224,16 +238,16 @@ def callback():
             return redirect(url_for("index"))  # Redirect to the main page
 
         except requests.exceptions.RequestException as e:
-            logging.error(f"OAuth2 callback: Failed to get user information: {e}")
+            logger.error(f"OAuth2 callback: Failed to get user information: {e}")
             flash(f"Failed to get user information: {e}", "error")
             return redirect(url_for("index"))  # Redirect to the main page
 
     except requests.exceptions.RequestException as e:
-        logging.error(f"OAuth2 callback: Failed to exchange code for access token: {e}")
+        logger.error(f"OAuth2 callback: Failed to exchange code for access token: {e}")
         flash("Failed to exchange code for access token.", "error")
         return redirect(url_for("index"))
     except Exception as e:
-        logging.exception("OAuth2 callback: An unexpected error occurred.")  # Log the full exception
+        logger.exception("OAuth2 callback: An unexpected error occurred.")  # Log the full exception
         flash("An unexpected error occurred.", "error")
         return redirect(url_for("index"))
 
@@ -323,16 +337,32 @@ def handle_admin_action(endpoint):
         flash("You do not have permission to perform this action.", "error")
         return redirect(url_for("index"))
 
+    try:
+        csrf_token = request.form.get('csrf_token')
+        validate_csrf(csrf_token)
+    except ValidationError as e:
+        logger.warning(f"CSRF validation failed: {e}")
+        flash('CSRF token is missing or invalid', 'error')
+        return redirect(url_for('index'))
+
     is_test = request.form.get("is_test") == "on"  # Check if the checkbox is checked
 
     if is_test:
-        print(f"Test mode is enabled for {endpoint}")
+        logger.info(f"Test mode is enabled for {endpoint}")
         flash(f"Test mode is enabled for {endpoint}", "warning")
 
     # Perform the action (replace with your actual logic)
     # For example, you might want to log the action instead of performing it
-    print(f"Performing action: {endpoint} (Test mode: {is_test})")
+    logger.info(f"Performing action: {endpoint} (Test mode: {is_test})")
     flash(f"Performing action: {endpoint} (Test mode: {is_test})", "info")
+
+    if not is_test:
+        # Save to the database (replace with your actual database logic)
+        logger.info(f"Saving action: {endpoint} to the database")
+        flash(f"Saving action: {endpoint} to the database", "success")
+    else:
+        logger.info(f"Skipping database save for {endpoint} due to test mode")
+        flash(f"Skipping database save for {endpoint} due to test mode", "warning")
 
     return redirect(url_for("index"))
 
@@ -422,24 +452,30 @@ def set_all_entry_limit():
         flash("You do not have permission to perform this action.", "error")
         return redirect(url_for("index"))
 
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        flash('CSRF token is missing or invalid', 'error')
+        return redirect(url_for('index'))
+
     is_test = request.form.get("is_test") == "on"  # Check if the checkbox is checked
     all_entry_limit = request.form.get("all_entry_limit")
 
     if is_test:
-        print(f"Test mode is enabled for set_all_entry_limit")
+        logger.info(f"Test mode is enabled for set_all_entry_limit")
         flash(f"Test mode is enabled for set_all_entry_limit", "warning")
 
     # Perform the action (replace with your actual logic)
     # For example, you might want to log the action instead of performing it
-    print(f"Performing action: set_all_entry_limit (Test mode: {is_test})")
+    logger.info(f"Performing action: set_all_entry_limit (Test mode: {is_test})")
     flash(f"Performing action: set_all_entry_limit (Test mode: {is_test})", "info")
 
     if not is_test:
         # Save to the database (replace with your actual database logic)
-        print(f"Saving action: set_all_entry_limit to the database")
+        logger.info(f"Saving action: set_all_entry_limit to the database")
         flash(f"Saving action: set_all_entry_limit to the database", "success")
     else:
-        print(f"Skipping database save for set_all_entry_limit due to test mode")
+        logger.info(f"Skipping database save for set_all_entry_limit due to test mode")
         flash(f"Skipping database save for set_all_entry_limit due to test mode", "warning")
 
     return redirect(url_for("index"))

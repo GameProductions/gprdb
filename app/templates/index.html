@@ -346,7 +346,7 @@
             {% if session.logged_in and session.is_admin %}
                 <h2>Raffle Management</h2>
                 <form method="POST" action="/start_raffle">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}">
                     <label for="raffle_name">Raffle Name:</label>
                     <input type="text" id="raffle_name" name="raffle_name" value="My Awesome Raffle"><br><br>
                     <label for="raffle_type">Raffle Type:</label>
