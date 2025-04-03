@@ -337,32 +337,14 @@ def handle_admin_action(endpoint):
         flash("You do not have permission to perform this action.", "error")
         return redirect(url_for("index"))
 
-    try:
-        csrf_token = request.form.get('csrf_token')
-        validate_csrf(csrf_token)
-    except ValidationError as e:
-        logger.warning(f"CSRF validation failed: {e}")
-        flash('CSRF token is missing or invalid', 'error')
-        return redirect(url_for('index'))
-
-    is_test = request.form.get("is_test") == "on"  # Check if the checkbox is checked
+    is_test = request.form.get("is_test") == "on"
 
     if is_test:
         logger.info(f"Test mode is enabled for {endpoint}")
         flash(f"Test mode is enabled for {endpoint}", "warning")
 
-    # Perform the action (replace with your actual logic)
-    # For example, you might want to log the action instead of performing it
     logger.info(f"Performing action: {endpoint} (Test mode: {is_test})")
     flash(f"Performing action: {endpoint} (Test mode: {is_test})", "info")
-
-    if not is_test:
-        # Save to the database (replace with your actual database logic)
-        logger.info(f"Saving action: {endpoint} to the database")
-        flash(f"Saving action: {endpoint} to the database", "success")
-    else:
-        logger.info(f"Skipping database save for {endpoint} due to test mode")
-        flash(f"Skipping database save for {endpoint} due to test mode", "warning")
 
     return redirect(url_for("index"))
 
@@ -458,24 +440,14 @@ def set_all_entry_limit():
         flash('CSRF token is missing or invalid', 'error')
         return redirect(url_for('index'))
 
-    is_test = request.form.get("is_test") == "on"  # Check if the checkbox is checked
+    is_test = request.form.get("is_test") == "on"
     all_entry_limit = request.form.get("all_entry_limit")
 
     if is_test:
         logger.info(f"Test mode is enabled for set_all_entry_limit")
         flash(f"Test mode is enabled for set_all_entry_limit", "warning")
 
-    # Perform the action (replace with your actual logic)
-    # For example, you might want to log the action instead of performing it
     logger.info(f"Performing action: set_all_entry_limit (Test mode: {is_test})")
     flash(f"Performing action: set_all_entry_limit (Test mode: {is_test})", "info")
-
-    if not is_test:
-        # Save to the database (replace with your actual database logic)
-        logger.info(f"Saving action: set_all_entry_limit to the database")
-        flash(f"Saving action: set_all_entry_limit to the database", "success")
-    else:
-        logger.info(f"Skipping database save for set_all_entry_limit due to test mode")
-        flash(f"Skipping database save for set_all_entry_limit due to test mode", "warning")
 
     return redirect(url_for("index"))
