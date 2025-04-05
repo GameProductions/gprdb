@@ -3,25 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link rel="stylesheet" href="style.css"> </head>
-<body class="">
-    <header class="">
+    <title>gprdb web app</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <!-- User Info Menu -->
         <div id="user-info-menu">
+            <!-- Check if a user is logged in -->
             {% if session.logged_in %}
-                <p>Logged in as: <span id="user-name">{{ session.user.username }}</span>
+                <!-- Display user information -->
+                <p>Logged in as: <span>{{ session.user.username }}</span>
+                    <!-- Check if the user is an admin -->
                     {% if session.is_admin %}
                         <span class="admin-flair">Admin</span>
                     {% else %}
                         <span class="admin-flair">Participant</span>
                     {% endif %}
                 </p>
+                <!-- Display the Discord server name if available -->
                 {% if session.guild_name %}
                     <p>Discord Server: {{ session.guild_name }}</p>
                 {% endif %}
+                <!-- Logout link -->
                 <a href="/logout">Logout</a>
             {% endif %}
         </div>
+        <!-- Display a welcome message based on user's admin status -->
         {% if session.logged_in and session.is_admin %}
             <h1>Welcome to the gprdb Admin Portal</h1>
         {% else %}
@@ -29,6 +38,7 @@
         {% endif %}
     </header>
 
+    <!-- Dark Mode Switch -->
     <div class="dark-mode-switch">
         <label>Dark Mode</label>
         <label class="switch">
@@ -36,7 +46,10 @@
             <span class="slider round"></span>
         </label>
     </div>
+
+    <!-- Main Content Container -->
     <div class="container">
+        <!-- Flash Messages (Success/Error/Info) -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="flashes">
@@ -47,39 +60,50 @@
             {% endif %}
         {% endwith %}
 
+        <!-- Check if a user is logged in -->
         {% if session.logged_in %}
         {% else %}
+            <!-- Display a message and a login button if not logged in -->
             <p>You must be logged in to use this page.</p>
-            <button class="nav-button" onclick="window.location.href='/login'">Login with Discord</button>
+            <button class="nav-button" id="login-button">Login with Discord</button>
         {% endif %}
 
+        <!-- Display content if a user is logged in -->
         {% if session.logged_in %}
+            <!-- Active Raffles Section -->
             {% if active_raffles %}
                 <h2>Active Raffles</h2>
                 <table class="raffle-table">
                     <thead>
                         <tr>
                             <th>Guild Name</th>
-                            <th>Status</th>
+                            <th>Raffle Type</th>
+                            <th>Assigned Entries</th>
+                            <!-- Display actions column only for admins -->
                             {% if session.is_admin %}
                                 <th>Actions</th>
                             {% endif %}
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Loop through active raffles -->
                         {% for guild_id, data in active_raffles.items() %}
                             <tr>
                                 <td>{{ data.name }}</td>
-                                <td>{{ data.status }}</td>
+                                <td>{{ data.raffle_type }}</td>
+                                <td>{{ data.assigned_entries }}</td>
+                                <!-- Display actions only for admins -->
                                 {% if session.is_admin %}
                                     <td>
+                                        <!-- Edit Raffle Form -->
                                         <form method="POST" action="/edit_raffle/{{ guild_id }}">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                            <button class="nav-button" type="submit">Edit</button>
+                                            <button class="nav-button">Edit</button>
                                         </form>
+                                        <!-- End Raffle Form -->
                                         <form method="POST" action="/end_raffle/{{ guild_id }}">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                            <button class="nav-button" type="submit">End</button>
+                                            <button class="nav-button">End</button>
                                         </form>
                                     </td>
                                 {% endif %}
@@ -88,239 +112,286 @@
                     </tbody>
                 </table>
             {% else %}
+                <!-- Display a message if no active raffles are found -->
                 <p>No active raffles found.</p>
             {% endif %}
 
+            <!-- Raffle History Section -->
             {% if raffle_history %}
                 <h2>Raffle History</h2>
                 <table class="raffle-table">
                     <thead>
                         <tr>
-                            <th>Guild Name</th>
-                            <th>Status</th>
+                            <th>Raffle Name</th>
+                            <th>Raffle Type</th>
                             <th>Start Time</th>
                             <th>End Time</th>
+                            <th>Winner</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Loop through raffle history -->
                         {% for raffle in raffle_history %}
                             <tr>
                                 <td>{{ raffle.name }}</td>
-                                <td>{{ raffle.status }}</td>
+                                <td>{{ raffle.raffle_type }}</td>
                                 <td>{{ raffle.start_time }}</td>
                                 <td>{{ raffle.end_time }}</td>
+                                <td>
+                                    <!-- Check if the logged-in user is the winner -->
+                                    {% if raffle.winner_id == session.user.id %}
+                                        <span class="winner-indicator">Winner</span>
+                                    {% else %}
+                                        <!-- Display the winner's name or "Not the Winner" -->
+                                        {% if raffle.winner_id %}
+                                            {{ raffle.winner_name }}
+                                        {% else %}
+                                            Not the Winner
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             {% else %}
+                <!-- Display a message if no raffle history is found -->
                 <p>No raffle history found.</p>
             {% endif %}
-            
+
+            <!-- Admin Controls Section (Only for Admins) -->
             {% if session.logged_in and session.is_admin %}
                 <div class="admin-controls">
-                    <h2>Raffle Management</h2>
-                    <section class="form-section">
-                        <h3>Start Raffle</h3>
-                        <form method="POST" action="/start_raffle">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="raffle_name">Raffle Name:</label>
-                            <input type="text" id="raffle_name" name="raffle_name" value="My Awesome Raffle"><br><br>
-                            <label for="raffle_type">Raffle Type:</label>
-                            <select id="raffle_type" name="raffle_type">
-                                <option value="standard" title="The standard raffle will pick a winner at random.">Standard</option>
-                                <option value="lucky_number" title="The lucky number raffle will pick a winner based on who has the lucky number.">Lucky Number</option>
-                                <option value="royal_rumble" title="The royal rumble raffle will eliminate participants over time until one remains.">Royal Rumble</option>
-                            </select><br><br>
-                            <label for="all_entry_limit">Entry Limit for All:</label>
-                            <input type="number" id="all_entry_limit" name="all_entry_limit" value="{{ session.all_entry_limit }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Start Raffle</button>
-                        </form>
-                    </section>
+                    <!-- Raffle Management Section -->
+                    <h2 class="admin-section-header">Raffle Management</h2>
+                    <div class="admin-section-grid">
+                        <!-- Start Raffle Form -->
+                        <section class="form-section">
+                            <h3>Start Raffle</h3>
+                            <form method="POST" action="/start_raffle">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="raffle_name">Raffle Name:</label>
+                                <input type="text" id="raffle_name" name="raffle_name" value="My Awesome Raffle"><br><br>
+                                <label for="raffle_type">Raffle Type:</label>
+                                <select id="raffle_type" name="raffle_type">
+                                    <option value="standard" title="The standard raffle will pick a winner at random.">Standard</option>
+                                    <option value="lucky_number" title="The lucky number raffle will pick a winner based on who has the lucky number.">Lucky Number</option>
+                                    <option value="royal_rumble" title="The royal rumble raffle will eliminate participants over time until one remains.">Royal Rumble</option>
+                                </select><br><br>
+                                <label for="all_entry_limit">Entry Limit for All:</label>
+                                <input type="number" id="all_entry_limit" name="all_entry_limit" value="{{ session.all_entry_limit or 0 }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Start Raffle</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Raffle Rules</h3>
-                        <div id="standard_rules" style="display:block">
-                            <h4>Standard Raffle Rules</h4>
-                            <p>The standard raffle will pick a winner at random.</p>
-                        </div>
+                        <!-- Raffle Rules Section -->
+                        <section class="form-section">
+                            <h3>Raffle Rules</h3>
+                            <div id="standard_rules">
+                                <h4>Standard Raffle Rules</h4>
+                                <p>The standard raffle will pick a winner at random.</p>
+                            </div>
 
-                        <div id="lucky_number_rules" style="display:none">
-                            <h4>Lucky Number Raffle Rules</h4>
-                            <p>The lucky number raffle will pick a winner based on who has the lucky number.</p>
-                        </div>
+                            <div id="lucky_number_rules" style="display:none">
+                                <h4>Lucky Number Raffle Rules</h4>
+                                <p>The lucky number raffle will pick a winner based on who has the lucky number.</p>
+                            </div>
 
-                        <div id="royal_rumble_rules" style="display:none">
-                            <h4>Royal Rumble Raffle Rules</h4>
-                            <p>The royal rumble raffle will eliminate participants over time until one remains.</p>
-                        </div>
-                    </section>
+                            <div id="royal_rumble_rules" style="display:none">
+                                <h4>Royal Rumble Raffle Rules</h4>
+                                <p>The royal rumble raffle will eliminate participants over time until one remains.</p>
+                            </div>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>End Raffle</h3>
-                        <form method="POST" action="/end_raffle">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">End Raffle</button>
-                        </form>
-                    </section>
+                        <!-- End Raffle Form -->
+                        <section class="form-section">
+                            <h3>End Raffle</h3>
+                            <form method="POST" action="/end_raffle">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">End Raffle</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Clear Raffle</h3>
-                        <form method="POST" action="/clear_raffle">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Clear Raffle</button>
-                        </form>
-                    </section>
+                        <!-- Clear Raffle Form -->
+                        <section class="form-section">
+                            <h3>Clear Raffle</h3>
+                            <form method="POST" action="/clear_raffle">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Clear Raffle</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Archive Raffle</h3>
-                        <form method="POST" action="/archive_raffle">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Archive Raffle</button>
-                        </form>
-                    </section>
+                        <!-- Archive Raffle Form -->
+                        <section class="form-section">
+                            <h3>Archive Raffle</h3>
+                            <form method="POST" action="/archive_raffle">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Archive Raffle</button>
+                            </form>
+                        </section>
+                    </div>
 
-                    <h2>Participant Management</h2>
-                    <section class="form-section">
-                        <h3>Add Participant</h3>
-                        <form method="POST" action="/add_participant">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="user_id">User ID:</label>
-                            <input type="text" id="user_id" name="user_id"><br><br>
-                            <label for="entries">Entries:</label>
-                            <input type="number" id="entries" name="entries" value="1"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Add Participant</button>
-                        </form>
-                    </section>
+                    <!-- Participant Management Section -->
+                    <h2 class="admin-section-header">Participant Management</h2>
+                    <div class="admin-section-grid">
+                        <!-- Add Participant Form -->
+                        <section class="form-section">
+                            <h3>Add Participant</h3>
+                            <form method="POST" action="/add_participant">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="user_id">User ID:</label>
+                                <input type="text" id="user_id" name="user_id"><br><br>
+                                <label for="entries">Entries:</label>
+                                <input type="number" id="entries" name="entries" value="1"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Add Participant</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Remove Participant</h3>
-                        <form method="POST" action="/remove_participant">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="remove_user_id">User ID to Remove:</label>
-                            <input type="text" id="remove_user_id" name="user_id"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Remove Participant</button>
-                        </form>
-                    </section>
+                        <!-- Remove Participant Form -->
+                        <section class="form-section">
+                            <h3>Remove Participant</h3>
+                            <form method="POST" action="/remove_participant">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="remove_user_id">User ID to Remove:</label>
+                                <input type="text" id="remove_user_id" name="user_id"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Remove Participant</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Set Participant Limit</h3>
-                        <form method="POST" action="/set_participant_limit">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="participant_limit">Participant Limit:</label>
-                            <input type="number" id="participant_limit" name="participant_limit" value="{{ session.participant_limit }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set Participant Limit</button>
-                        </form>
-                    </section>
+                        <!-- Set Participant Limit Form -->
+                        <section class="form-section">
+                            <h3>Set Participant Limit</h3>
+                            <form method="POST" action="/set_participant_limit">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="participant_limit">Participant Limit:</label>
+                                <input type="number" id="participant_limit" name="participant_limit" value="{{ session.participant_limit }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set Participant Limit</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Set Entry Limit</h3>
-                        <form method="POST" action="/set_entry_limit">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="entry_limit">Entry Limit:</label>
-                            <input type="number" id="entry_limit" name="entry_limit" value="{{ session.entry_limit }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set Entry Limit</button>
-                        </form>
-                    </section>
+                        <!-- Set Entry Limit Form -->
+                        <section class="form-section">
+                            <h3>Set Entry Limit</h3>
+                            <form method="POST" action="/set_entry_limit">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="entry_limit">Entry Limit:</label>
+                                <input type="number" id="entry_limit" name="entry_limit" value="{{ session.entry_limit }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set Entry Limit</button>
+                            </form>
+                        </section>
+                    </div>
 
-                    <h2>Settings Configuration</h2>
-                    <section class="form-section">
-                        <h3>Set Raffle Name</h3>
-                        <form method="POST" action="/set_raffle_name">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="set_raffle_name">Set Raffle Name:</label>
-                            <input type="text" id="set_raffle_name" name="raffle_name" value="{{ session.raffle_name }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set Raffle Name</button>
-                        </form>
-                    </section>
+                    <!-- Settings Configuration Section -->
+                    <h2 class="admin-section-header">Settings Configuration</h2>
+                    <div class="admin-section-grid">
+                        <!-- Set Raffle Name Form -->
+                        <section class="form-section">
+                            <h3>Set Raffle Name</h3>
+                            <form method="POST" action="/set_raffle_name">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="set_raffle_name">Set Raffle Name:</label>
+                                <input type="text" id="set_raffle_name" name="raffle_name" value="{{ session.raffle_name }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set Raffle Name</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Set Webhook URL</h3>
-                        <form method="POST" action="/set_webhook_url">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="webhook_url">Webhook URL:</label>
-                            <input type="url" id="webhook_url" name="webhook_url" value="{{ session.webhook_url }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set Webhook URL</button>
-                        </form>
-                    </section>
+                        <!-- Set Webhook URL Form -->
+                        <section class="form-section">
+                            <h3>Set Webhook URL</h3>
+                            <form method="POST" action="/set_webhook_url">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="webhook_url">Webhook URL:</label>
+                                <input type="url" id="webhook_url" name="webhook_url" value="{{ session.webhook_url }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set Webhook URL</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Set Admin Role</h3>
-                        <form method="POST" action="/set_admin_role">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="admin_role_id">Admin Role ID:</label>
-                            <input type="text" id="admin_role_id" name="admin_role_id" value="{{ session.admin_role_id }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set Admin Role</button>
-                        </form>
-                    </section>
+                        <!-- Set Admin Role Form -->
+                        <section class="form-section">
+                            <h3>Set Admin Role</h3>
+                            <form method="POST" action="/set_admin_role">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="admin_role_id">Admin Role ID:</label>
+                                <input type="text" id="admin_role_id" name="admin_role_id" value="{{ session.admin_role_id }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set Admin Role</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Set Raffle Channel</h3>
-                        <form method="POST" action="/set_raffle_channel">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="raffle_channel_id">Raffle Channel ID:</label>
-                            <input type="text" id="raffle_channel_id" name="raffle_channel_id" value="{{ session.raffle_channel_id }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set Raffle Channel</button>
-                        </form>
-                    </section>
+                        <!-- Set Raffle Channel Form -->
+                        <section class="form-section">
+                            <h3>Set Raffle Channel</h3>
+                            <form method="POST" action="/set_raffle_channel">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="raffle_channel_id">Raffle Channel ID:</label>
+                                <input type="text" id="raffle_channel_id" name="raffle_channel_id" value="{{ session.raffle_channel_id }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set Raffle Channel</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Set Lucky Number</h3>
-                        <form method="POST" action="/set_lucky_number">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="lucky_number">Lucky Number:</label>
-                            <input type="number" id="lucky_number" name="lucky_number" value="{{ session.lucky_number }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set Lucky Number</button>
-                        </form>
-                    </section>
+                        <!-- Set Lucky Number Form -->
+                        <section class="form-section">
+                            <h3>Set Lucky Number</h3>
+                            <form method="POST" action="/set_lucky_number">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="lucky_number">Lucky Number:</label>
+                                <input type="number" id="lucky_number" name="lucky_number" value="{{ session.lucky_number }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set Lucky Number</button>
+                            </form>
+                        </section>
 
-                    <section class="form-section">
-                        <h3>Set All Entry Limit</h3>
-                        <form method="POST" action="/set_all_entry_limit">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <label for="all_entry_limit">Entry Limit for All:</label>
-                            <input type="number" id="all_entry_limit" name="all_entry_limit" value="{{ session.all_entry_limit }}"><br><br>
-                            <label for="is_test">Test Action:</label>
-                            <input type="checkbox" id="is_test" name="is_test"><br><br>
-                            <button class="nav-button" type="submit">Set All Entry Limit</button>
-                        </form>
-                    </section>
+                        <!-- Set All Entry Limit Form -->
+                        <section class="form-section">
+                            <h3>Set All Entry Limit</h3>
+                            <form method="POST" action="/set_all_entry_limit">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="all_entry_limit">Entry Limit for All:</label>
+                                <input type="number" id="all_entry_limit" name="all_entry_limit" value="{{ session.all_entry_limit or 0 }}"><br><br>
+                                <label for="is_test">Test Action:</label>
+                                <input id="is_test" name="is_test"><br><br>
+                                <button class="nav-button">Set All Entry Limit</button>
+                            </form>
+                        </section>
+                    </div>
                 </div>
             {% endif %}
         {% endif %}
     </div>
+
+    <!-- JavaScript Section -->
     <script>
+        // Get references to DOM elements
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const body = document.body;
         const header = document.querySelector('header');
         const userInfoMenu = document.getElementById('user-info-menu');
         const darkModeSwitch = document.querySelector('.dark-mode-switch');
+        const loginButton = document.getElementById('login-button');
 
         // Function to toggle dark mode
         function toggleDarkMode() {
@@ -343,7 +414,14 @@
 
         // Event listener for the dark mode toggle
         darkModeToggle.addEventListener('change', toggleDarkMode);
+
+        // Event listener for the login button
+        loginButton.addEventListener('click', () => {
+            window.location.href = '/login';
+        });
     </script>
+
+    <!-- Footer Section -->
     <footer>
         <a href="https://gameproductions.net/gprdb_privacy">Privacy Policy</a> | <a href="https://gameproductions.net/gprdb_tos">Terms of Service</a>
     </footer>
