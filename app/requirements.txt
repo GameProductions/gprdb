@@ -2,26 +2,25 @@
 certifi                 # SSL certificate verification
 cffi                    # Foreign Function Interface for Python
 charset-normalizer      # Charset detection
-click                   # Command-line interface creation
-colorama                # Cross-platform colored terminal text
-cryptography            # Encryption and security
-discord.py              # Discord API library
-dotenv                  # Loads environment variables from .env file
-Flask                   # Web framework
-Flask-WTF               # Flask extension for forms and CSRF protection
 idna                    # Internationalized Domain Names in Applications
-itsdangerous            # Securely sign data
-Jinja2                  # Template engine
-MarkupSafe              # Escapes strings for HTML and XML
-PyNaCl                  # Python binding to the Networking and Cryptography library
-packaging               # Utilities for dealing with packages
-pycparser               # C parser in Python
-PyJWT                   # JSON Web Token implementation
+urllib3                 # HTTP library with thread safety
 requests                # HTTP library
 six                     # Python 2 and 3 compatibility library
 tomli                   # TOML parser
-urllib3                 # HTTP library with thread safety
 Werkzeug                # WSGI utility library
+Jinja2                  # Template engine
+MarkupSafe              # Escapes strings for HTML and XML
+packaging               # Utilities for dealing with packages
+pycparser               # C parser in Python
+PyJWT                   # JSON Web Token implementation
+colorama                # Cross-platform colored terminal text
+cryptography            # Encryption and security
+PyNaCl                  # Python binding to the Networking and Cryptography library
+
+# Web framework
+Flask                   # Web framework
+Flask-WTF               # Flask extension for forms and CSRF protection
+itsdangerous            # Securely sign data
 
 # Session management
 Flask-Session           # For storing session data
@@ -43,3 +42,9 @@ Flask-Limiter           # For rate limiting
 
 # Asynchronous support
 asyncio                 # For asynchronous programming
+
+# Discord API
+discord.py              # Discord API library
+
+# Environment variables
+dotenv                  # Loads environment variables from .env file

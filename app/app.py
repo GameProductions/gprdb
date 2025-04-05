@@ -3,9 +3,9 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, flash
 import discord
 from discord.ext import commands
+from nacl.signing import VerifyKey
 import requests # type: ignore
 from urllib.parse import quote_plus
-from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 from flask_wtf import FlaskForm # type: ignore
 from wtforms import StringField, SubmitField # type: ignore
@@ -22,6 +22,7 @@ from multiprocessing import Queue
 import traceback
 import asyncio
 from datetime import timedelta
+
 
 load_dotenv()
 
@@ -42,11 +43,9 @@ def before_request():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=30)
     session.modified = True
-    if not session.get('csrf_token'):
-         session['csrf_token'] = generate_csrf()
+    session['csrf_token'] = generate_csrf()
 
 # Configure logging
-# Set up logging
 log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(level=log_level,
                     format='%(asctime)s [%(levelname)s] %(name)s - %(message)s')
@@ -80,6 +79,7 @@ intents = discord.Intents.default()
 intents.messages = True
 intents.guilds = True
 intents.message_content = True
+intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -123,16 +123,28 @@ def get_user_guilds(access_token):
     response.raise_for_status()
     return response.json()
 
+def get_user_guild_member(access_token, guild_id):
+    """Fetches the user's member data in a specific guild."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(f"{DISCORD_API_BASE_URL}/users/@me/guilds/{guild_id}/member", headers=headers)
+    if response.status_code == 404:
+        return None  # User is not a member of the guild
+    response.raise_for_status()
+    return response.json()
 
-def is_admin(user_guilds, guild_id, admin_role_id):
+def is_admin(user_guilds, guild_id, admin_role_id, access_token):
     """Checks if the user is an admin in the specified guild."""
     for guild in user_guilds:
         if guild["id"] == guild_id:
-            # The user is in the guild, now check for the admin role
-            # This part requires the 'guilds.members.read' scope and a different API endpoint
-            # For simplicity, we'll assume the user is an admin if they are in the guild
-            # A more robust implementation would check the user's roles in the guild
-            return guild["name"]
+            # User is in the guild, now check for the admin role
+            member_data = get_user_guild_member(access_token, guild_id)
+            if member_data is None:
+                return False
+            
+            if "roles" in member_data:
+                if str(admin_role_id) in member_data["roles"]:
+                    return guild["name"]
+            return False
     return False
 
 
@@ -164,7 +176,7 @@ async def on_ready():
 # Flask Routes
 @app.route("/")
 def index():
-    return render_template("index.html", user=session.get("user"), is_admin=session.get("is_admin"), guild_name=session.get("guild_name"), csrf=csrf)
+    return render_template("index.html", user=session.get("user"), is_admin=session.get("is_admin"), guild_name=session.get("guild_name"), csrf_token=session.get('csrf_token'))
 
 
 @app.route("/discord")
@@ -201,6 +213,15 @@ def callback():
         return redirect(url_for("index"))
 
     try:
+        # Check if the session is stored in redis
+        redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"), port=int(os.getenv("REDIS_PORT", "6379")))
+        session_key = f"{app.config['SESSION_KEY_PREFIX']}{session.sid}"
+        session_data = redis_client.get(session_key)
+        if session_data:
+            logger.info(f"Session data stored in Redis for key: {session_key}")
+        else:
+            logger.error(f"Session data not found in Redis for key: {session_key}")
+            
         # Exchange the code for an access token
         data = {
             "client_id": DISCORD_CLIENT_ID,
@@ -208,7 +229,7 @@ def callback():
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": os.getenv("DISCORD_REDIRECT_URI"),
-            "scope": "identify email guilds"
+            "scope": "identify email guilds guilds.members.read"
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = requests.post(DISCORD_TOKEN_URL, data=data, headers=headers)
@@ -230,12 +251,16 @@ def callback():
 
             # Check for admin
             user_guilds = get_user_guilds(access_token)
-            guild_name = is_admin(user_guilds, DISCORD_GUILD_ID, DISCORD_ADMIN_ROLE_ID)
+            guild_name = is_admin(user_guilds, DISCORD_GUILD_ID, DISCORD_ADMIN_ROLE_ID, access_token)
             session["is_admin"] = True if guild_name else False
             session["guild_name"] = guild_name if isinstance(guild_name, str) else None
 
             flash("Login successful!", "success")
-            return redirect(url_for("index"))  # Redirect to the main page
+            return redirect(url_for("index"))
+        except requests.exceptions.RequestException as e:
+            logger.error(f"OAuth2 callback: Failed to get user information: {e}")
+            flash(f"Failed to get user information: {e}", "error")
+            return redirect(url_for("index"))
 
         except requests.exceptions.RequestException as e:
             logger.error(f"OAuth2 callback: Failed to get user information: {e}")
@@ -262,37 +287,58 @@ def logout():
 
 def verify_signature(signature, timestamp, body):
     """Verifies the signature of a Discord interaction request."""
-    key = VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY))
-    message = bytes(timestamp + body, encoding="utf8")
-    signature_bytes = bytes.fromhex(signature)
+    logger.info("Starting signature verification...")
+    logger.debug(f"Signature: {signature}")
+    logger.debug(f"Timestamp: {timestamp}")
+    logger.debug(f"Body: {body}")
     try:
+        key = VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY))
+        message = bytes(timestamp + body, encoding="utf8")
+        signature_bytes = bytes.fromhex(signature)
         key.verify(message, signature_bytes)
+        logger.info("Signature verification successful.")
         return True
     except BadSignatureError:
+        logger.error("Invalid signature.")
+        return False
+    except Exception as e:
+        logger.error(f"Error during signature verification: {e}")
         return False
 
 
 @app.route("/interactions", methods=["POST"])
 def interactions():
     """Handles Discord interactions (e.g., slash commands)."""
+    logger.info("Received a request to /interactions")
     signature = request.headers.get("X-Signature-Ed25519")
     timestamp = request.headers.get("X-Signature-Timestamp")
     body = request.data.decode("utf-8")
 
+    logger.debug(f"Signature: {signature}")
+    logger.debug(f"Timestamp: {timestamp}")
+    logger.debug(f"Body: {body}")
+
     if not signature or not timestamp:
+        logger.error("Missing signature or timestamp.")
         return "Missing signature or timestamp.", 400
 
     if not verify_signature(signature, timestamp, body):
+        logger.error("Signature verification failed.")
         return "Invalid signature.", 401
 
     data = request.get_json()
     interaction_type = data.get("type")
 
+    logger.debug(f"Interaction type: {interaction_type}")
+
     if interaction_type == 1:  # Ping Interaction
+        logger.info("Responding to Ping interaction.")
         return jsonify({"type": 1})
     elif interaction_type == 2:  # Command Interaction
         command_name = data["data"]["name"]
+        logger.info(f"Received command: {command_name}")
         if command_name == "hello":
+            logger.info("Responding to 'hello' command.")
             return jsonify({
                 "type": 4,
                 "data": {
@@ -300,10 +346,13 @@ def interactions():
                 }
             })
         else:
+            logger.warning(f"Unknown command: {command_name}")
             return "Unknown command.", 400
     elif interaction_type == 3:  # Component Interaction
+        logger.info("Responding to Component interaction.")
         return jsonify({"type": 6})
     else:
+        logger.warning(f"Invalid interaction type: {interaction_type}")
         return "Invalid interaction type.", 400
 
 
@@ -313,24 +362,6 @@ def execute_bot_command(command):
     print(f"Command '{command}' added to the queue.")
 
 
-@app.route("/dashboard", methods=["GET", "POST"])
-def dashboard():
-    """Renders the admin dashboard and handles form submissions."""
-    if not session.get("logged_in"):
-        flash("You must be logged in to access the dashboard.", "error")
-        return redirect(url_for("index"))
-    try:
-        return render_template(
-            "dashboard.html",
-            channel_id=discord_channel_id,
-            guild_id=discord_guild_id,
-            admin_role_id=discord_admin_role_id,
-            csrf=csrf
-        )
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
 def handle_admin_action(endpoint):
     """Handles admin actions, checking for test mode."""
     if not session.get("logged_in") or not session.get("is_admin"):
@@ -338,7 +369,7 @@ def handle_admin_action(endpoint):
         return redirect(url_for("index"))
 
     is_test = request.form.get("is_test") == "on"
-
+    #import pdb; pdb.set_trace()
     if is_test:
         logger.info(f"Test mode is enabled for {endpoint}")
         flash(f"Test mode is enabled for {endpoint}", "warning")
@@ -451,3 +482,22 @@ def set_all_entry_limit():
     flash(f"Performing action: set_all_entry_limit (Test mode: {is_test})", "info")
 
     return redirect(url_for("index"))
+
+# ... (your existing app.py code) ...
+
+Session(app)  # Initialize Flask-Session
+
+# Test Redis connection
+try:
+    redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"), port=int(os.getenv("REDIS_PORT", "6379")))
+    response = redis_client.ping()
+    if response:
+        logger.info("Redis connection successful!")
+    else:
+        logger.error("Redis ping failed!")
+except redis.exceptions.ConnectionError as e:
+    logger.error(f"Redis connection failed: {e}")
+except Exception as e:
+    logger.error(f"An unexpected error occurred while testing Redis: {e}")
+
+# ... (rest of your app.py code) ...
