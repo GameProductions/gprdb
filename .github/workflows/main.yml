@@ -1,0 +1,74 @@
+ ```yaml
+ name: Build and Push Docker Image
+
+ on:
+   push:
+     branches:
+       - main
+
+ jobs:
+   build-and-push:
+     runs-on: ubuntu-latest
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v3
+
+       - name: Set up Python
+         uses: actions/setup-python@v4
+         with:
+           python-version: '3.11'
+
+       - name: Install dependencies
+         run: pip install -r requirements.txt
+
+       - name: Read Version
+         id: read_version
+         run: |
+           VERSION=$(cat VERSION)
+           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+       - name: Increment Version
+         id: increment_version
+         run: |
+           VERSION=$(cat VERSION)
+           IFS='.' read -r major minor patch <<< "$VERSION"
+           patch=$((patch + 1))
+           NEW_VERSION="$major.$minor.$patch"
+           echo "$NEW_VERSION" > VERSION
+           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+           git config --global user.name 'GitHub Actions'
+           git config --global user.email 'actions@github.com'
+           git add VERSION
+           git commit -m "chore: Bump version to $NEW_VERSION"
+           git push
+
+       - name: Login to Docker Hub
+         uses: docker/login-action@v2
+         with:
+           username: ${{ secrets.DOCKERHUB_USERNAME }}
+           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+       - name: Build and Push Docker Image
+         uses: docker/build-push-action@v4
+         with:
+           context: .
+           push: true
+           tags: |
+             morenicano/gprdb:${{ steps.increment_version.outputs.NEW_VERSION }}
+             morenicano/gprdb:latest
+ ```
+
+ *   **Explanation:**
+     *   **`VERSION` file:** You'd have a `VERSION` file in your repository (e.g., `1.0.0`).
+     *   **`read_version` step:** Reads the current version from the `VERSION` file.
+     *   **`increment_version` step:**
+         *   Reads the current version.
+         *   Increments the patch number.
+         *   Writes the new version back to the `VERSION` file.
+         *   Commits and pushes the change to the repository.
+     *   **`Login to Docker Hub` step:** Logs in to Docker Hub using secrets.
+     *   **`Build and Push Docker Image` step:**
+         *   Builds the image.
+         *   Tags it with the new version and `latest`.
+         *   Pushes it to Docker Hub.
+     * **Secrets:** You need to add the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as secrets in your GitHub repository.
