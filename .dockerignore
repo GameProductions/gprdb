@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+.tox/
+.venv/
+venv/
+
+# Environment files
+.env
+.rename_to_.env
+
+# Temporary files
+commands.md
+features.md
+license.md
+LICENSE
+settings.md
+README.md
+CNAME.md
+CNAME
+old_files/
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Dependency files
+requirements.txt
+
+# Data files
+*.db
+*.sqlite
+
+# IDE / Editor
+.idea/
+.vscode/
+
+# OS
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Distribution / Build
+dist/
+build/
+*.egg-info/
+
+# Github
+*.github
+github/
+github_actions/
+*.git
+.gitignore
+*.gitattributes
+CNAME
+*.DS_Store

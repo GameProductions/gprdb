@@ -97,12 +97,11 @@
                                     <td>
                                         <!-- Edit Raffle Form -->
                                         <form method="POST" action="/edit_raffle/{{ guild_id }}">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                             <button class="nav-button">Edit</button>
                                         </form>
                                         <!-- End Raffle Form -->
-                                        <form method="POST" action="/end_raffle/{{ guild_id }}">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <form method="POST" action="/end_raffle">
+                                            {{ end_raffle_form.hidden_tag() }}
                                             <button class="nav-button">End</button>
                                         </form>
                                     </td>
@@ -169,50 +168,30 @@
                         <section class="form-section">
                             <h3>Start Raffle</h3>
                             <form method="POST" action="/start_raffle">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="raffle_name">Raffle Name:</label>
-                                <input type="text" id="raffle_name" name="raffle_name" value="My Awesome Raffle"><br><br>
-                                <label for="raffle_type">Raffle Type:</label>
-                                <select id="raffle_type" name="raffle_type">
-                                    <option value="standard" title="The standard raffle will pick a winner at random.">Standard</option>
-                                    <option value="lucky_number" title="The lucky number raffle will pick a winner based on who has the lucky number.">Lucky Number</option>
-                                    <option value="royal_rumble" title="The royal rumble raffle will eliminate participants over time until one remains.">Royal Rumble</option>
-                                </select><br><br>
-                                <label for="all_entry_limit">Entry Limit for All:</label>
-                                <input type="number" id="all_entry_limit" name="all_entry_limit" value="{{ session.all_entry_limit or 0 }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Start Raffle</button>
+                                {{ start_raffle_form.hidden_tag() }}
+                                {{ start_raffle_form.raffle_name.label }} {{ start_raffle_form.raffle_name }}<br><br>
+                                {{ start_raffle_form.raffle_type.label }} {{ start_raffle_form.raffle_type }}<br><br>
+                                <div id="raffle_rules">
+                                    {% for raffle_type in raffle_types %}
+                                        <div id="{{ raffle_type.name|lower }}_rules" style="display:none">
+                                            <h4>{{ raffle_type.name }} Raffle Rules</h4>
+                                            <p>{{ raffle_type.description }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {{ start_raffle_form.all_entry_limit.label }} {{ start_raffle_form.all_entry_limit }}<br><br>
+                                {{ start_raffle_form.is_test.label }} {{ start_raffle_form.is_test }}<br><br>
+                                {{ start_raffle_form.submit }}
                             </form>
-                        </section>
-
-                        <!-- Raffle Rules Section -->
-                        <section class="form-section">
-                            <h3>Raffle Rules</h3>
-                            <div id="standard_rules">
-                                <h4>Standard Raffle Rules</h4>
-                                <p>The standard raffle will pick a winner at random.</p>
-                            </div>
-
-                            <div id="lucky_number_rules" style="display:none">
-                                <h4>Lucky Number Raffle Rules</h4>
-                                <p>The lucky number raffle will pick a winner based on who has the lucky number.</p>
-                            </div>
-
-                            <div id="royal_rumble_rules" style="display:none">
-                                <h4>Royal Rumble Raffle Rules</h4>
-                                <p>The royal rumble raffle will eliminate participants over time until one remains.</p>
-                            </div>
                         </section>
 
                         <!-- End Raffle Form -->
                         <section class="form-section">
                             <h3>End Raffle</h3>
                             <form method="POST" action="/end_raffle">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">End Raffle</button>
+                                {{ end_raffle_form.hidden_tag() }}
+                                {{ end_raffle_form.is_test.label }} {{ end_raffle_form.is_test }}<br><br>
+                                {{ end_raffle_form.submit }}
                             </form>
                         </section>
 
@@ -220,10 +199,9 @@
                         <section class="form-section">
                             <h3>Clear Raffle</h3>
                             <form method="POST" action="/clear_raffle">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Clear Raffle</button>
+                                {{ clear_raffle_form.hidden_tag() }}
+                                {{ clear_raffle_form.is_test.label }} {{ clear_raffle_form.is_test }}<br><br>
+                                {{ clear_raffle_form.submit }}
                             </form>
                         </section>
 
@@ -231,10 +209,9 @@
                         <section class="form-section">
                             <h3>Archive Raffle</h3>
                             <form method="POST" action="/archive_raffle">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Archive Raffle</button>
+                                {{ archive_raffle_form.hidden_tag() }}
+                                {{ archive_raffle_form.is_test.label }} {{ archive_raffle_form.is_test }}<br><br>
+                                {{ archive_raffle_form.submit }}
                             </form>
                         </section>
                     </div>
@@ -246,14 +223,11 @@
                         <section class="form-section">
                             <h3>Add Participant</h3>
                             <form method="POST" action="/add_participant">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="user_id">User ID:</label>
-                                <input type="text" id="user_id" name="user_id"><br><br>
-                                <label for="entries">Entries:</label>
-                                <input type="number" id="entries" name="entries" value="1"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Add Participant</button>
+                                {{ add_participant_form.hidden_tag() }}
+                                {{ add_participant_form.user_id.label }} {{ add_participant_form.user_id }}<br><br>
+                                {{ add_participant_form.entries.label }} {{ add_participant_form.entries }}<br><br>
+                                {{ add_participant_form.is_test.label }} {{ add_participant_form.is_test }}<br><br>
+                                {{ add_participant_form.submit }}
                             </form>
                         </section>
 
@@ -261,12 +235,10 @@
                         <section class="form-section">
                             <h3>Remove Participant</h3>
                             <form method="POST" action="/remove_participant">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="remove_user_id">User ID to Remove:</label>
-                                <input type="text" id="remove_user_id" name="user_id"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Remove Participant</button>
+                                {{ remove_participant_form.hidden_tag() }}
+                                {{ remove_participant_form.user_id.label }} {{ remove_participant_form.user_id }}<br><br>
+                                {{ remove_participant_form.is_test.label }} {{ remove_participant_form.is_test }}<br><br>
+                                {{ remove_participant_form.submit }}
                             </form>
                         </section>
 
@@ -274,12 +246,10 @@
                         <section class="form-section">
                             <h3>Set Participant Limit</h3>
                             <form method="POST" action="/set_participant_limit">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="participant_limit">Participant Limit:</label>
-                                <input type="number" id="participant_limit" name="participant_limit" value="{{ session.participant_limit }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set Participant Limit</button>
+                                {{ set_participant_limit_form.hidden_tag() }}
+                                {{ set_participant_limit_form.participant_limit.label }} {{ set_participant_limit_form.participant_limit }}<br><br>
+                                {{ set_participant_limit_form.is_test.label }} {{ set_participant_limit_form.is_test }}<br><br>
+                                {{ set_participant_limit_form.submit }}
                             </form>
                         </section>
 
@@ -287,12 +257,10 @@
                         <section class="form-section">
                             <h3>Set Entry Limit</h3>
                             <form method="POST" action="/set_entry_limit">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="entry_limit">Entry Limit:</label>
-                                <input type="number" id="entry_limit" name="entry_limit" value="{{ session.entry_limit }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set Entry Limit</button>
+                                {{ set_entry_limit_form.hidden_tag() }}
+                                {{ set_entry_limit_form.entry_limit.label }} {{ set_entry_limit_form.entry_limit }}<br><br>
+                                {{ set_entry_limit_form.is_test.label }} {{ set_entry_limit_form.is_test }}<br><br>
+                                {{ set_entry_limit_form.submit }}
                             </form>
                         </section>
                     </div>
@@ -304,12 +272,10 @@
                         <section class="form-section">
                             <h3>Set Raffle Name</h3>
                             <form method="POST" action="/set_raffle_name">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="set_raffle_name">Set Raffle Name:</label>
-                                <input type="text" id="set_raffle_name" name="raffle_name" value="{{ session.raffle_name }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set Raffle Name</button>
+                                {{ set_raffle_name_form.hidden_tag() }}
+                                {{ set_raffle_name_form.raffle_name.label }} {{ set_raffle_name_form.raffle_name }}<br><br>
+                                {{ set_raffle_name_form.is_test.label }} {{ set_raffle_name_form.is_test }}<br><br>
+                                {{ set_raffle_name_form.submit }}
                             </form>
                         </section>
 
@@ -317,12 +283,10 @@
                         <section class="form-section">
                             <h3>Set Webhook URL</h3>
                             <form method="POST" action="/set_webhook_url">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="webhook_url">Webhook URL:</label>
-                                <input type="url" id="webhook_url" name="webhook_url" value="{{ session.webhook_url }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set Webhook URL</button>
+                                {{ set_webhook_url_form.hidden_tag() }}
+                                {{ set_webhook_url_form.webhook_url.label }} {{ set_webhook_url_form.webhook_url }}<br><br>
+                                {{ set_webhook_url_form.is_test.label }} {{ set_webhook_url_form.is_test }}<br><br>
+                                {{ set_webhook_url_form.submit }}
                             </form>
                         </section>
 
@@ -330,12 +294,10 @@
                         <section class="form-section">
                             <h3>Set Admin Role</h3>
                             <form method="POST" action="/set_admin_role">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="admin_role_id">Admin Role ID:</label>
-                                <input type="text" id="admin_role_id" name="admin_role_id" value="{{ session.admin_role_id }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set Admin Role</button>
+                                {{ set_admin_role_form.hidden_tag() }}
+                                {{ set_admin_role_form.admin_role_id.label }} {{ set_admin_role_form.admin_role_id }}<br><br>
+                                {{ set_admin_role_form.is_test.label }} {{ set_admin_role_form.is_test }}<br><br>
+                                {{ set_admin_role_form.submit }}
                             </form>
                         </section>
 
@@ -343,12 +305,10 @@
                         <section class="form-section">
                             <h3>Set Raffle Channel</h3>
                             <form method="POST" action="/set_raffle_channel">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="raffle_channel_id">Raffle Channel ID:</label>
-                                <input type="text" id="raffle_channel_id" name="raffle_channel_id" value="{{ session.raffle_channel_id }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set Raffle Channel</button>
+                                {{ set_raffle_channel_form.hidden_tag() }}
+                                {{ set_raffle_channel_form.raffle_channel_id.label }} {{ set_raffle_channel_form.raffle_channel_id }}<br><br>
+                                {{ set_raffle_channel_form.is_test.label }} {{ set_raffle_channel_form.is_test }}<br><br>
+                                {{ set_raffle_channel_form.submit }}
                             </form>
                         </section>
 
@@ -356,12 +316,10 @@
                         <section class="form-section">
                             <h3>Set Lucky Number</h3>
                             <form method="POST" action="/set_lucky_number">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="lucky_number">Lucky Number:</label>
-                                <input type="number" id="lucky_number" name="lucky_number" value="{{ session.lucky_number }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set Lucky Number</button>
+                                {{ set_lucky_number_form.hidden_tag() }}
+                                {{ set_lucky_number_form.lucky_number.label }} {{ set_lucky_number_form.lucky_number }}<br><br>
+                                {{ set_lucky_number_form.is_test.label }} {{ set_lucky_number_form.is_test }}<br><br>
+                                {{ set_lucky_number_form.submit }}
                             </form>
                         </section>
 
@@ -369,12 +327,10 @@
                         <section class="form-section">
                             <h3>Set All Entry Limit</h3>
                             <form method="POST" action="/set_all_entry_limit">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <label for="all_entry_limit">Entry Limit for All:</label>
-                                <input type="number" id="all_entry_limit" name="all_entry_limit" value="{{ session.all_entry_limit or 0 }}"><br><br>
-                                <label for="is_test">Test Action:</label>
-                                <input id="is_test" name="is_test"><br><br>
-                                <button class="nav-button">Set All Entry Limit</button>
+                                {{ set_all_entry_limit_form.hidden_tag() }}
+                                {{ set_all_entry_limit_form.all_entry_limit.label }} {{ set_all_entry_limit_form.all_entry_limit }}<br><br>
+                                {{ set_all_entry_limit_form.is_test.label }} {{ set_all_entry_limit_form.is_test }}<br><br>
+                                {{ set_all_entry_limit_form.submit }}
                             </form>
                         </section>
                     </div>
@@ -385,39 +341,57 @@
 
     <!-- JavaScript Section -->
     <script>
-        // Get references to DOM elements
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const body = document.body;
-        const header = document.querySelector('header');
-        const userInfoMenu = document.getElementById('user-info-menu');
-        const darkModeSwitch = document.querySelector('.dark-mode-switch');
-        const loginButton = document.getElementById('login-button');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get references to DOM elements
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const body = document.body;
+            const header = document.querySelector('header');
+            const userInfoMenu = document.getElementById('user-info-menu');
+            const darkModeSwitch = document.querySelector('.dark-mode-switch');
+            const loginButton = document.getElementById('login-button');
+            const raffleTypeSelect = document.getElementById('start_raffle_form-raffle_type');
+            const raffleRulesDivs = document.querySelectorAll('#raffle_rules > div');
 
-        // Function to toggle dark mode
-        function toggleDarkMode() {
-            body.classList.toggle('dark-mode');
-            header.classList.toggle('dark-mode');
-            userInfoMenu.classList.toggle('dark-mode'); // Toggle dark mode for user info menu
-            darkModeSwitch.classList.toggle('dark-mode'); // Toggle dark mode for dark mode switch
-            // Store the user's preference in localStorage
-            localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
-        }
+            // Function to toggle dark mode
+            function toggleDarkMode() {
+                body.classList.toggle('dark-mode');
+                header.classList.toggle('dark-mode');
+                userInfoMenu.classList.toggle('dark-mode'); // Toggle dark mode for user info menu
+                darkModeSwitch.classList.toggle('dark-mode'); // Toggle dark mode for dark mode switch
+                // Store the user's preference in localStorage
+                localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
+            }
 
-        // Check for saved preference in localStorage
-        if (localStorage.getItem('darkMode') === 'enabled') {
-            darkModeToggle.checked = true;
-            toggleDarkMode(); // Apply dark mode if it was previously enabled
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            darkModeToggle.checked = true; // Update the checkbox state
-            toggleDarkMode(); // Apply dark mode
-        }
+            // Check for saved preference in localStorage
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                darkModeToggle.checked = true;
+                toggleDarkMode(); // Apply dark mode if it was previously enabled
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                darkModeToggle.checked = true; // Update the checkbox state
+                toggleDarkMode(); // Apply dark mode
+            }
 
-        // Event listener for the dark mode toggle
-        darkModeToggle.addEventListener('change', toggleDarkMode);
+            // Event listener for the dark mode toggle
+            darkModeToggle.addEventListener('change', toggleDarkMode);
 
-        // Event listener for the login button
-        loginButton.addEventListener('click', () => {
-            window.location.href = '/login';
+            // Event listener for the login button
+            loginButton.addEventListener('click', () => {
+                window.location.href = '/login';
+            });
+
+            // Function to show/hide raffle rules based on selected raffle type
+            function updateRaffleRulesVisibility() {
+                const selectedRaffleType = raffleTypeSelect.value;
+                raffleRulesDivs.forEach(div => {
+                    div.style.display = div.id.startsWith(selectedRaffleType) ? 'block' : 'none';
+                });
+            }
+
+            // Event listener for the raffle type select
+            raffleTypeSelect.addEventListener('change', updateRaffleRulesVisibility);
+
+            // Initial visibility update
+            updateRaffleRulesVisibility();
         });
     </script>
 

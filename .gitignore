@@ -172,3 +172,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Temporary files
+old_files/
+*.tmp
+*.temp
